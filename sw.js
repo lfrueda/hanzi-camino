@@ -1,11 +1,16 @@
 // Guarda la app para que funcione sin internet.
-const CACHE='hanzi-camino-v3';
+// Estrategia: primero lo guardado (abre al instante, aunque la red falle) y en segundo plano
+// se baja la version nueva para la proxima vez.
+const CACHE='hanzi-camino-v4';
 const ARCHIVOS=['./','./index.html','./manifest.webmanifest','./icon-192.png','./icon-512.png','./kai.woff2'];
 self.addEventListener('install',e=>{ e.waitUntil(caches.open(CACHE).then(c=>c.addAll(ARCHIVOS))); self.skipWaiting(); });
 self.addEventListener('activate',e=>{ e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==CACHE).map(k=>caches.delete(k))))); self.clients.claim(); });
-// primero la red (para recibir versiones nuevas); si no hay internet, lo guardado
 self.addEventListener('fetch',e=>{
   if(e.request.method!=='GET') return;
-  e.respondWith(fetch(e.request).then(r=>{ const copia=r.clone(); caches.open(CACHE).then(c=>c.put(e.request,copia)); return r; })
-    .catch(()=>caches.match(e.request).then(r=>r||caches.match('./index.html'))));
+  e.respondWith(caches.open(CACHE).then(async c=>{
+    const guardado = await c.match(e.request, {ignoreSearch:true});
+    const deRed = fetch(e.request).then(r=>{ if(r.ok) c.put(e.request, r.clone()); return r; }).catch(()=>null);
+    if(guardado){ e.waitUntil(deRed); return guardado; }
+    return (await deRed) || (await c.match('./index.html')) || Response.error();
+  }));
 });
