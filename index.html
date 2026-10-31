@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>汉字 · Camino</title>
+<meta name="theme-color" content="#14111c">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<style>
+  :root{
+    --bg:#14111c; --card:#1f1a2b; --card2:#2a2339; --line:#3a3150; --txt:#ece7f5; --muted:#a59cb8;
+    --acc:#c9a2ff; --acc2:#7fd6c2; --ok:#58cc8a; --okbg:#173326; --bad:#ff7b7b; --badbg:#3a1f26;
+    --cjk:"Noto Sans SC","PingFang SC","Microsoft YaHei","Hiragino Sans GB","Source Han Sans SC",sans-serif;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;background:var(--bg);color:var(--txt);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+  button{font:inherit;color:inherit;border:0;cursor:pointer;background:none}
+  .wrap{max-width:560px;margin:0 auto;padding:0 16px}
+  .cjk{font-family:var(--cjk)}
+  /* ---------- camino ---------- */
+  #camino header{position:sticky;top:0;background:#14111cf0;backdrop-filter:blur(6px);z-index:2;
+    display:flex;justify-content:space-between;align-items:center;padding:14px 16px;border-bottom:1px solid var(--line)}
+  #camino header h1{margin:0;font-size:18px}
+  .chips{display:flex;gap:14px;font-weight:700}
+  .unidad{margin:22px 0 8px;border-radius:18px;padding:14px 16px;background:var(--card)}
+  .unidad.locked{opacity:.45}
+  .unidad h2{margin:0;font-size:17px}
+  .unidad p{margin:4px 0 0;color:var(--muted);font-size:14px}
+  .unidad .rads{font-family:var(--cjk);font-size:20px;color:var(--acc);margin-top:6px;letter-spacing:6px}
+  .lecciones{display:flex;flex-direction:column;align-items:center;gap:14px;padding:16px 0 4px}
+  .nodo{width:74px;height:74px;border-radius:50%;background:var(--card2);border:4px solid var(--line);
+    display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:12px;color:var(--muted);text-align:center;line-height:1.1}
+  .nodo b{font-size:22px;color:var(--txt)}
+  .nodo.done{background:#2b3d33;border-color:var(--ok)}
+  .nodo.now{background:var(--acc);border-color:#e4cfff;color:#1b1428;box-shadow:0 0 0 6px #c9a2ff33}
+  .nodo.now b{color:#1b1428}
+  .nodo:disabled{cursor:default}
+  .nodo:nth-child(2){transform:translateX(-46px)} .nodo:nth-child(3){transform:translateX(46px)}
+  .pie{color:var(--muted);font-size:13px;text-align:center;margin:30px 0 40px}
+  .pie button{color:var(--acc);text-decoration:underline;margin:0 6px}
+  /* ---------- lección ---------- */
+  #leccion{display:none;min-height:100vh;flex-direction:column}
+  .top{display:flex;align-items:center;gap:12px;padding:16px}
+  .top .x{font-size:24px;color:var(--muted);width:32px}
+  .barra{flex:1;height:14px;background:var(--card2);border-radius:99px;overflow:hidden}
+  .barra i{display:block;height:100%;width:0;background:var(--ok);border-radius:99px;transition:width .3s}
+  .ej{flex:1;padding:6px 18px 160px}
+  .ej h3{margin:6px 0 18px;font-size:20px}
+  .grande{font-family:var(--cjk);font-size:96px;text-align:center;line-height:1.15;margin:4px 0 14px}
+  .sub{color:var(--muted);text-align:center;margin-top:-6px}
+  .opciones{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .op{background:var(--card);border:2px solid var(--line);border-radius:14px;padding:16px 10px;font-size:17px;min-height:64px}
+  .op.cjk{font-family:var(--cjk);font-size:34px;padding:8px}
+  .op.sel{border-color:var(--acc);background:#2b2142}
+  .op.ok{border-color:var(--ok);background:var(--okbg)} .op.bad{border-color:var(--bad);background:var(--badbg)}
+  .tonos{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+  .tonos .op{font-size:22px}
+  input.py{width:100%;font:inherit;font-size:24px;text-align:center;padding:14px;border-radius:14px;border:2px solid var(--line);
+    background:var(--card);color:var(--txt);outline:none}
+  input.py:focus{border-color:var(--acc)}
+  .ayuda{color:var(--muted);font-size:13px;text-align:center;margin-top:8px}
+  .linea{min-height:66px;border-bottom:2px solid var(--line);display:flex;flex-wrap:wrap;gap:8px;padding:8px 0;margin-bottom:18px}
+  .fichas{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
+  .ficha{background:var(--card);border:2px solid var(--line);border-bottom-width:4px;border-radius:12px;padding:8px 12px;font-family:var(--cjk);font-size:24px}
+  .ficha.hueco{visibility:hidden}
+  .intro{background:var(--card);border-radius:20px;padding:18px;text-align:center}
+  .intro .tag{display:inline-block;background:var(--acc);color:#1b1428;font-weight:700;font-size:12px;padding:3px 10px;border-radius:99px}
+  .intro .py{font-size:26px;color:var(--acc2)} .intro .es{font-size:20px;margin:2px 0 12px}
+  .partes{display:flex;justify-content:center;gap:8px;font-family:var(--cjk);font-size:28px;margin:6px 0}
+  .partes span{background:var(--card2);border-radius:10px;padding:4px 12px}
+  .partes span.r{outline:2px solid var(--acc)}
+  .nota{color:var(--muted);font-size:14px;margin:6px 0 0}
+  .abajo{position:fixed;left:0;right:0;bottom:0;padding:16px;border-top:1px solid var(--line);background:var(--bg)}
+  .abajo.ok{background:var(--okbg);border-color:transparent} .abajo.bad{background:var(--badbg);border-color:transparent}
+  .abajo .in{max-width:560px;margin:0 auto}
+  .fb{font-weight:800;font-size:18px;margin-bottom:8px;display:none}
+  .fb small{display:block;font-weight:500;font-size:15px;margin-top:2px}
+  .abajo.ok .fb{display:block;color:var(--ok)} .abajo.bad .fb{display:block;color:var(--bad)}
+  .btn{width:100%;padding:15px;border-radius:14px;font-weight:800;font-size:16px;background:var(--acc);color:#1b1428;letter-spacing:.03em}
+  .btn:disabled{background:var(--card2);color:var(--muted)}
+  .abajo.ok .btn{background:var(--ok);color:#0e2418} .abajo.bad .btn{background:var(--bad);color:#2a0c10}
+  .fin{text-align:center;padding-top:50px}
+  .fin .big{font-size:64px}
+  .fin .stats{display:flex;gap:10px;justify-content:center;margin:20px 0}
+  .fin .stats div{background:var(--card);border-radius:14px;padding:12px 16px;min-width:96px}
+  .fin .stats b{display:block;font-size:24px}
+</style>
+</head>
+<body>
+
+<section id="camino">
+  <header>
+    <h1><span class="cjk" style="color:var(--acc)">汉字</span> Camino</h1>
+    <div class="chips"><span>🔥 <b id="racha">0</b></span><span>⭐ <b id="xp">0</b></span></div>
+  </header>
+  <div class="wrap" id="unidades"></div>
+  <div class="pie wrap">
+    <button id="exportar">Exportar progreso (JSON)</button>·<button id="borrar">Borrar progreso</button>
+  </div>
+</section>
+
+<section id="leccion">
+  <div class="top wrap" style="width:100%"><button class="x" id="salir">✕</button><div class="barra"><i id="avance"></i></div></div>
+  <div class="ej wrap" id="ej" style="width:100%"></div>
+  <div class="abajo" id="abajo"><div class="in">
+    <div class="fb" id="fb"></div>
+    <button class="btn" id="accion" disabled>Comprobar</button>
+  </div></div>
+</section>
+
+<script>
+// ================== DATOS (basados en la guía de radicales de "Chino Contemporáneo") ==================
+const RADS = {'亻':'persona','女':'mujer','子':'niño','日':'sol, tiempo','人':'persona','口':'boca','讠':'palabras, hablar',
+  '氵':'agua','彳':'caminar','囗':'cercado','一':'uno','丨':'raya','木':'árbol, madera','火':'fuego (al lado)','灬':'fuego (abajo)',
+  '艹':'hierba, plantas','扌':'mano','目':'ojo','足':'pie','忄':'corazón (al lado)','心':'corazón (abajo)','月':'carne, cuerpo',
+  '饣':'comida','钅':'metal','衤':'ropa','礻':'lo sagrado','纟':'hilo, seda','王':'jade','冫':'hielo, frío','宀':'techo, casa',
+  '冖':'cubrir','⺮':'bambú','戈':'lanza','辶':'avanzar, movimiento','攵':'acción (golpear, hacer)','刂':'cuchillo, cortar',
+  '走':'caminar, correr','力':'fuerza','土':'tierra, suelo','阝':'colina (a la izq.) / ciudad (a la der.)','穴':'cueva, hueco',
+  '广':'refugio, edificio','门':'puerta','犭':'perro, animales','鸟':'pájaro, aves','虫':'insectos, bichos','贝':'concha, dinero',
+  '雨':'lluvia, clima','石':'piedra','米':'arroz, granos','页':'cabeza','欠':'boca abierta, aliento','疒':'enfermedad',
+  '车':'vehículo','马':'caballo'};
+const C = {};
+function h(hz,py,pn,es,rad,son){ C[hz]={h:hz,py,pn,es,rad,son}; return hz; }
+
+const UNIDADES = [
+ { t:'1 · Personas', d:'亻 女 子: gente y familia', rads:'亻女子',
+   hz:[h('你','nǐ','ni3','tú','亻'), h('我','wǒ','wo3','yo','戈'), h('他','tā','ta1','él','亻'), h('她','tā','ta1','ella','女'),
+       h('好','hǎo','hao3','bien, bueno','女'), h('是','shì','shi4','ser','日'), h('们','men','men5','(plural de personas)','亻','门 mén'),
+       h('妈','mā','ma1','mamá','女','马 mǎ'), h('姐','jiě','jie3','hermana mayor','女','且 qiě'), h('人','rén','ren2','persona','人'),
+       h('孩','hái','hai2','niño (en 孩子)','子'), h('休','xiū','xiu1','descansar','亻')],
+   frases:[['你们好','Hola a todos (a ustedes)',['你们','好'],['我','她']],
+           ['我是你妈妈','Soy tu mamá',['我','是','你','妈妈'],['他','姐姐']],
+           ['她们是孩子','Ellas son niñas',['她们','是','孩子'],['我们','好']]],
+   pares:[] },
+ { t:'2 · Boca y palabras', d:'口 讠: comer, beber, hablar', rads:'口讠',
+   hz:[h('吃','chī','chi1','comer','口'), h('喝','hē','he1','beber','口'), h('吗','ma','ma5','¿…? (pregunta)','口','马 mǎ'),
+       h('叫','jiào','jiao4','llamarse','口'), h('说','shuō','shuo1','hablar, decir','讠'), h('语','yǔ','yu3','idioma','讠'),
+       h('谢','xiè','xie4','agradecer','讠'), h('汉','hàn','han4','han (chino)','氵'), h('很','hěn','hen3','muy','彳'),
+       h('不','bù','bu4','no','一'), h('中','zhōng','zhong1','medio, centro','丨'), h('国','guó','guo2','país','囗')],
+   frases:[['你好吗','¿Cómo estás?',['你','好','吗'],['我','很']],
+           ['我很好','Estoy muy bien',['我','很','好'],['不','吗']],
+           ['我说汉语','Hablo chino',['我','说','汉语'],['喝','中国']],
+           ['我是中国人','Soy chino',['我','是','中国','人'],['不','汉语']],
+           ['谢谢你','Gracias',['谢谢','你'],['我','吗']]],
+   pares:[] },
+ { t:'3 · Naturaleza', d:'氵 木 日 火 灬 艹', rads:'氵木日火灬艹',
+   hz:[h('河','hé','he2','río','氵'), h('海','hǎi','hai3','mar','氵'), h('洗','xǐ','xi3','lavar','氵'), h('林','lín','lin2','bosque','木'),
+       h('树','shù','shu4','árbol','木'), h('明','míng','ming2','brillante','日'), h('晚','wǎn','wan3','noche, tarde','日','免 miǎn'),
+       h('灯','dēng','deng1','lámpara','火','丁 dīng'), h('热','rè','re4','caliente','灬'), h('点','diǎn','dian3','punto, un poco','灬'),
+       h('茶','chá','cha2','té','艹'), h('花','huā','hua1','flor','艹')],
+   frases:[['我喝茶','Tomo té',['我','喝','茶'],['吃','花']],
+           ['茶很热','El té está muy caliente',['茶','很','热'],['不','海']],
+           ['我不喝热茶','No tomo té caliente',['我','不','喝','热','茶'],['吗','花']]],
+   pares:[ {h:h('冷','lěng','leng3','frío','冫'),a:'冫',b:'氵',por:'Dos gotas = hielo, frío.'},
+           {h:'河',a:'氵',b:'冫',por:'Tres gotas = agua.'},
+           {h:h('冰','bīng','bing1','hielo','冫'),a:'冫',b:'氵',por:'Dos gotas = hielo.'},
+           {h:'灯',a:'火',b:'灬',por:'El fuego va al lado: 火.'},
+           {h:'热',a:'灬',b:'火',por:'El fuego va abajo: 灬 (cuatro puntos).'},
+           {h:'茶',a:'艹',b:'⺮',por:'Dos cruces = hierba (艹).'},
+           {h:h('等','děng','deng3','esperar','⺮'),a:'⺮',b:'艹',por:'Dos “k” pequeñas = bambú (⺮).'} ] },
+ { t:'4 · Cuerpo y acciones', d:'扌 目 足 忄 心 月', rads:'扌目足忄心月',
+   hz:[h('打','dǎ','da3','golpear, jugar (打球)','扌'), h('找','zhǎo','zhao3','buscar','扌'), h('眼','yǎn','yan3','ojo','目'),
+       h('睡','shuì','shui4','dormir','目'), h('路','lù','lu4','camino (ruta)','足'), h('跑','pǎo','pao3','correr','足','包 bāo'),
+       h('忙','máng','mang2','ocupado','忄','亡 wáng'), h('快','kuài','kuai4','rápido','忄','夬 guài'),
+       h('想','xiǎng','xiang3','pensar, querer','心','相 xiāng'), h('您','nín','nin2','usted','心','你 nǐ'),
+       h('脸','liǎn','lian3','cara','月'), h('脑','nǎo','nao3','cerebro','月')],
+   frases:[['我很忙','Estoy muy ocupado',['我','很','忙'],['快','不']],
+           ['您好','Hola (formal)',['您','好'],['你','吗']],
+           ['你想喝茶吗','¿Quieres tomar té?',['你','想','喝','茶','吗'],['我','热']]],
+   pares:[ {h:'脸',a:'月 carne',b:'月 luna',por:'Va del cuerpo: es carne (肉).'},
+           {h:'脑',a:'月 carne',b:'月 luna',por:'Va del cuerpo: es carne (肉).'},
+           {h:'明',a:'月 luna',b:'月 carne',por:'Va de luz: es luna.'},
+           {h:'快',a:'忄',b:'心',por:'El corazón va al lado: 忄.'},
+           {h:'想',a:'心',b:'忄',por:'El corazón va abajo: 心.'} ] },
+ { t:'5 · Comida, ropa y cosas', d:'饣 钅 衤 礻 纟 王', rads:'饣钅衤礻纟王',
+   hz:[h('饭','fàn','fan4','comida, arroz cocido','饣','反 fǎn'), h('饿','è','e4','tener hambre','饣'), h('钱','qián','qian2','dinero','钅'),
+       h('裤','kù','ku4','pantalón','衤','库 kù'), h('神','shén','shen2','espíritu','礻','申 shēn'), h('红','hóng','hong2','rojo','纟'),
+       h('给','gěi','gei3','dar','纟'), h('玩','wán','wan2','jugar','王','元 yuán'), h('球','qiú','qiu2','pelota','王','求 qiú')],
+   frases:[['我很饿','Tengo mucha hambre',['我','很','饿'],['饭','不']],
+           ['我想吃饭','Quiero comer',['我','想','吃饭'],['喝','钱']],
+           ['我给你钱','Te doy dinero',['我','给','你','钱'],['他','红']],
+           ['我们打球','Jugamos a la pelota',['我们','打','球'],['玩','你']]],
+   pares:[ {h:'神',a:'礻',b:'衤',por:'Un punto (4 trazos) = 礻, lo sagrado.'},
+           {h:'裤',a:'衤',b:'礻',por:'Un trazo más (5) = 衤, ropa.'},
+           {h:h('福','fú','fu2','fortuna','礻'),a:'礻',b:'衤',por:'Buena fortuna: lo sagrado (礻).'},
+           {h:h('家','jiā','jia1','casa','宀'),a:'宀',b:'冖',por:'Con punto arriba = 宀, techo, casa.'},
+           {h:h('写','xiě','xie3','escribir','冖'),a:'冖',b:'宀',por:'Sin punto = 冖, cubrir.'},
+           {h:'玩',a:'王 jade',b:'王 rey',por:'A la izquierda, 王 es jade (玉 sin el punto).'} ] },
+ { t:'6 · Movimiento y acciones', d:'彳 辶 攵 刂 走 力', rads:'彳辶攵刂走力',
+   hz:[h('往','wǎng','wang3','hacia','彳'), h('街','jiē','jie1','calle','彳'), h('这','zhè','zhe4','este, esto','辶'),
+       h('进','jìn','jin4','entrar','辶'), h('道','dào','dao4','vía, el Dao','辶'), h('教','jiāo','jiao1','enseñar','攵'),
+       h('放','fàng','fang4','soltar, poner','攵','方 fāng'), h('到','dào','dao4','llegar','刂'), h('别','bié','bie2','otro; no (¡no hagas!)','刂'),
+       h('刻','kè','ke4','grabar; cuarto de hora','刂'), h('起','qǐ','qi3','levantarse','走','己 jǐ'), h('超','chāo','chao1','superar','走','召 zhào'),
+       h('动','dòng','dong4','mover','力'), h('加','jiā','jia1','sumar, agregar','力')],
+   frases:[['这是我妈妈','Esta es mi mamá',['这','是','我','妈妈'],['那','他']],
+           ['他教我汉语','Él me enseña chino',['他','教','我','汉语'],['说','你']],
+           ['你别说','No lo digas',['你','别','说'],['不','吗']]],
+   pares:[ {h:'这',a:'辶',b:'走',por:'辶 se escribe al final, abrazando por abajo.'},
+           {h:'起',a:'走',b:'辶',por:'走 se escribe primero.'},
+           {h:'教',a:'攵',b:'文',por:'攵 (acción) empieza con un trazo corto inclinado; 文 empieza con punto.'},
+           {h:'放',a:'攵',b:'文',por:'Es un verbo: lleva 攵, acción.'},
+           {h:'往',a:'彳',b:'亻',por:'Dos trazos inclinados = 彳 (caminar); uno = 亻 (persona).'},
+           {h:'他',a:'亻',b:'彳',por:'Un trazo inclinado = 亻 (persona).'} ] },
+ { t:'7 · Lugares y construcciones', d:'土 阝 宀 穴 冖 广 门 囗', rads:'土阝宀穴广门',
+   hz:[h('地','dì','di4','tierra, suelo','土'), h('场','chǎng','chang3','lugar (plaza, cancha)','土'), h('附','fù','fu4','cerca de','阝','付 fù'),
+       h('阳','yáng','yang2','sol (en 太阳)','阝'), h('院','yuàn','yuan4','patio','阝'), h('都','dōu','dou1','todos','阝'),
+       h('那','nà','na4','eso, aquel','阝'), h('部','bù','bu4','parte','阝'), h('室','shì','shi4','cuarto, sala','宀'),
+       h('空','kōng','kong1','vacío','穴','工 gōng'), h('窗','chuāng','chuang1','ventana','穴'), h('军','jūn','jun1','ejército','冖'),
+       h('店','diàn','dian4','tienda','广','占 zhàn'), h('床','chuáng','chuang2','cama','广'), h('问','wèn','wen4','preguntar','门','门 mén'),
+       h('间','jiān','jian1','espacio, entre','门'), h('园','yuán','yuan2','jardín','囗','元 yuán')],
+   frases:[['你们都好吗','¿Están todos bien?',['你们','都','好','吗'],['我们','很']],
+           ['那是我家','Esa es mi casa',['那','是','我','家'],['这','店']],
+           ['我问你','Te pregunto',['我','问','你'],['说','他']]],
+   pares:[ {h:'阳',a:'阝 izquierda',b:'阝 derecha',por:'A la izquierda viene de 阜: colina, terreno.'},
+           {h:'院',a:'阝 izquierda',b:'阝 derecha',por:'A la izquierda: colina, terreno.'},
+           {h:'都',a:'阝 derecha',b:'阝 izquierda',por:'A la derecha viene de 邑: ciudad, lugar.'},
+           {h:'那',a:'阝 derecha',b:'阝 izquierda',por:'A la derecha: ciudad, lugar.'},
+           {h:'室',a:'宀',b:'冖',por:'Con punto arriba = 宀, techo, casa.'},
+           {h:'军',a:'冖',b:'宀',por:'Sin punto = 冖, cubrir.'},
+           {h:'空',a:'穴',b:'宀',por:'穴 = 宀 con dos trazos abajo: cueva, hueco.'} ] },
+ { t:'8 · Animales, clima y comida', d:'犭 鸟 虫 雨 石 米 欠', rads:'犭鸟虫雨石米欠',
+   hz:[h('猫','māo','mao1','gato','犭','苗 miáo'), h('狗','gǒu','gou3','perro','犭'), h('鸡','jī','ji1','gallina, pollo','鸟'),
+       h('鸭','yā','ya1','pato','鸟','甲 jiǎ'), h('虾','xiā','xia1','camarón','虫','下 xià'), h('雪','xuě','xue3','nieve','雨'),
+       h('零','líng','ling2','cero','雨','令 lìng'), h('碗','wǎn','wan3','tazón','石','宛 wǎn'), h('糖','táng','tang2','azúcar, dulce','米','唐 táng'),
+       h('欢','huān','huan1','alegre','欠'), h('歌','gē','ge1','canción','欠','哥 gē')],
+   frases:[['我不吃糖','No como dulces',['我','不','吃','糖'],['喝','猫']],
+           ['我想吃鸡','Quiero comer pollo',['我','想','吃','鸡'],['狗','鸭']]],
+   pares:[ {h:'冷',a:'冫',b:'氵',por:'Dos gotas = hielo, frío.'},
+           {h:'海',a:'氵',b:'冫',por:'Tres gotas = agua.'} ] },
+ { t:'9 · Cosas, dinero y salud', d:'贝 页 疒 钅 纟 车 马 王', rads:'贝页疒车马',
+   hz:[h('贵','guì','gui4','caro','贝'), h('题','tí','ti2','tema, pregunta','页'), h('病','bìng','bing4','enfermedad','疒','丙 bǐng'),
+       h('疼','téng','teng2','doler','疒'), h('铁','tiě','tie3','hierro','钅'), h('经','jīng','jing1','pasar por','纟'),
+       h('骑','qí','qi2','montar (a caballo, en bici)','马','奇 qí'), h('驴','lǘ','lv2','burro','马'), h('较','jiào','jiao4','comparar','车','交 jiāo'),
+       h('辆','liàng','liang4','(clasificador de vehículos)','车','两 liǎng'), h('现','xiàn','xian4','ahora, aparecer','王','见 jiàn')],
+   frases:[['这很贵','Esto es muy caro',['这','很','贵'],['那','钱']],
+           ['我不想骑马','No quiero montar a caballo',['我','不','想','骑','马'],['驴','很']]],
+   pares:[ {h:'病',a:'疒',b:'广',por:'疒 lleva dos puntitos a la izquierda: enfermedad.'},
+           {h:'店',a:'广',b:'疒',por:'广 sin puntitos: edificio, refugio.'},
+           {h:'现',a:'王 jade',b:'王 rey',por:'A la izquierda, 王 es jade (玉 sin el punto).'} ] },
+];
+const LECCIONES_POR_UNIDAD = 3;
+const NOMBRES=['Parte 1','Parte 2','Repaso de la unidad'];
+
+// ================== ESTADO ==================
+const KEY='hanzi-camino-v1';
+const VACIO=()=>({hechas:{}, xp:0, racha:0, ultimoDia:null, aciertos:{}, fallos:{}});
+let S = (()=>{ try{ return JSON.parse(localStorage.getItem(KEY)) || VACIO() }catch(e){ return VACIO() } })();
+const guardar=()=>{ try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){} };
+const fecha=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+const hoy=()=>fecha(new Date()), ayer=()=>fecha(new Date(Date.now()-864e5));
+const idL=(u,l)=>u+'-'+l;
+function desbloqueada(u,l){ if(u===0&&l===0) return true; return l>0 ? !!S.hechas[idL(u,l-1)] : !!S.hechas[idL(u-1,LECCIONES_POR_UNIDAD-1)]; }
+
+// ================== CAMINO ==================
+function pintaCamino(){
+  const racha = (S.ultimoDia===hoy()||S.ultimoDia===ayer()) ? S.racha : 0;
+  document.getElementById('racha').textContent=racha; document.getElementById('xp').textContent=S.xp;
+  document.getElementById('unidades').innerHTML = UNIDADES.map((u,ui)=>{
+    const nodos=[0,1,2].map(l=>{
+      const hecha=!!S.hechas[idL(ui,l)], ok=desbloqueada(ui,l);
+      return `<button class="nodo ${hecha?'done':(ok?'now':'')}" data-u="${ui}" data-l="${l}" ${ok?'':'disabled'}>
+              <b>${hecha?'✓':(l===2?'★':l+1)}</b>${['Parte 1','Parte 2','Repaso'][l]}</button>`;
+    }).join('');
+    return `<div class="unidad ${desbloqueada(ui,0)?'':'locked'}"><h2>${u.t}</h2><p>${u.d}</p><div class="rads">${u.rads}</div>
+            <div class="lecciones">${nodos}</div></div>`;
+  }).join('');
+  document.querySelectorAll('.nodo:not([disabled])').forEach(b=>b.onclick=()=>empezar(+b.dataset.u,+b.dataset.l));
+}
+
+// ================== GENERADOR DE LECCIONES ==================
+const mezcla=a=>a.map(x=>[Math.random(),x]).sort((p,q)=>p[0]-q[0]).map(x=>x[1]);
+const toma=(a,n)=>mezcla(a).slice(0,n);
+const aprendidosHasta=ui=>UNIDADES.slice(0,ui+1).flatMap(u=>u.hz);
+const conTono=hz=>C[hz].pn.slice(-1)!=='5';
+
+function armaLeccion(ui,l){
+  const u=UNIDADES[ui], mitad=Math.ceil(u.hz.length/2), pool=aprendidosHasta(ui);
+  if(l<2){
+    const nuevos = l===0 ? u.hz.slice(0,mitad) : u.hz.slice(mitad);
+    const primero = nuevos.flatMap(hz=>[{tipo:'intro',hz},{tipo:'significado',hz,pool}]);
+    const resto = mezcla([ ...nuevos.map(hz=>({tipo:'hanzi',hz,pool})),
+                           ...(l===1 ? toma(nuevos.filter(conTono),3).map(hz=>({tipo:'tono',hz})) : []) ]);
+    return [...primero, ...resto];
+  }
+  return mezcla([ ...toma(u.hz,3).map(hz=>({tipo:'hanzi',hz,pool})),
+                  ...toma(u.hz.filter(conTono),2).map(hz=>({tipo:'tono',hz})),
+                  ...toma(u.hz.filter(conTono),3).map(hz=>({tipo:'escribe',hz})),
+                  ...toma(u.pares,3).map(p=>({tipo:'par',p})),
+                  ...toma(u.frases,2).map(f=>({tipo:'frase',f})) ]);
+}
+
+// ================== MOTOR DE LECCIÓN ==================
+let L=null;
+const $=id=>document.getElementById(id);
+function empezar(ui,l){
+  const cola=armaLeccion(ui,l);
+  L={ui,l,cola,total:cola.length,hechos:0,errados:new Set(),xpGanado:0,actual:null,estado:'pregunta'};
+  $('camino').style.display='none'; $('leccion').style.display='flex'; window.scrollTo(0,0);
+  siguiente();
+}
+$('salir').onclick=()=>{ if(L.estado==='fin' || confirm('¿Salir? Se pierde el avance de esta lección.')) volver(); };
+function volver(){ L=null; $('leccion').style.display='none'; $('camino').style.display='block'; pintaCamino(); window.scrollTo(0,0); }
+function avance(){ $('avance').style.width = Math.round(100*L.hechos/L.total)+'%'; }
+function setAbajo(clase,txt,html){ $('abajo').className='abajo '+(clase||''); $('fb').innerHTML=html||''; $('accion').textContent=txt; }
+
+function siguiente(){
+  avance();
+  if(!L.cola.length) return fin();
+  L.actual=L.cola.shift(); L.sel=null; L.estado='pregunta';
+  const e=L.actual; setAbajo('', e.tipo==='intro'?'Continuar':'Comprobar');
+  $('accion').disabled = e.tipo!=='intro';
+  ({intro:pIntro, significado:pSignificado, hanzi:pHanzi, tono:pTono, escribe:pEscribe, par:pPar, frase:pFrase})[e.tipo](e);
+  window.scrollTo(0,0);
+}
+const opcionesHTML=(ops,cjk)=>`<div class="opciones">${ops.map((o,i)=>`<button class="op ${cjk?'cjk':''}" data-i="${i}">${o}</button>`).join('')}</div>`;
+function activaOpciones(){
+  document.querySelectorAll('.op').forEach(b=>b.onclick=()=>{
+    if(L.estado!=='pregunta') return;
+    document.querySelectorAll('.op').forEach(x=>x.classList.remove('sel')); b.classList.add('sel');
+    L.sel=+b.dataset.i; $('accion').disabled=false;
+  });
+}
+
+function pIntro(e){
+  const c=C[e.hz];
+  $('ej').innerHTML=`<div class="intro"><span class="tag">NUEVO</span><div class="grande">${c.h}</div>
+    <div class="py">${c.py}</div><div class="es">${c.es}</div>
+    <div class="partes"><span class="r">${c.rad}</span>${c.son?`<span>${c.son.split(' ')[0]}</span>`:''}</div>
+    <p class="nota">Radical <b class="cjk">${c.rad}</b>: ${RADS[c.rad]||''}${c.son?` · suena parecido a <b class="cjk">${c.son}</b>`:''}</p></div>`;
+}
+function pSignificado(e){
+  const c=C[e.hz];
+  const malas=toma([...new Set(e.pool.filter(x=>x!==e.hz).map(x=>C[x].es))].filter(s=>s!==c.es),3);
+  e.ops=mezcla([c.es,...malas]); e.correcta=e.ops.indexOf(c.es);
+  $('ej').innerHTML=`<h3>¿Qué significa?</h3><div class="grande">${c.h}</div>${opcionesHTML(e.ops,false)}`; activaOpciones();
+}
+function pHanzi(e){
+  const c=C[e.hz];
+  const parecidos=e.pool.filter(x=>x!==e.hz && C[x].rad===c.rad && C[x].es!==c.es);
+  const otros=e.pool.filter(x=>x!==e.hz && !parecidos.includes(x) && C[x].es!==c.es);
+  const malas=[...toma(parecidos,2), ...toma(otros,3)].slice(0,3);
+  e.ops=mezcla([c.h,...malas]); e.correcta=e.ops.indexOf(c.h);
+  $('ej').innerHTML=`<h3>Elige el hanzi de: <span style="color:var(--acc2)">“${c.es}”</span></h3>${opcionesHTML(e.ops,true)}`; activaOpciones();
+}
+function pTono(e){
+  const c=C[e.hz], base=c.pn.slice(0,-1);
+  e.ops=[1,2,3,4].map(t=>conMarca(base,t)); e.correcta=+c.pn.slice(-1)-1;
+  $('ej').innerHTML=`<h3>¿Con qué tono se dice?</h3><div class="grande">${c.h}</div><p class="sub">${c.es}</p><div style="height:14px"></div>
+    <div class="tonos">${e.ops.map((o,i)=>`<button class="op" data-i="${i}">${o}</button>`).join('')}</div>`; activaOpciones();
+}
+function pEscribe(e){
+  const c=C[e.hz];
+  $('ej').innerHTML=`<h3>Escribe el pinyin con su tono</h3><div class="grande">${c.h}</div>
+    <input class="py" id="pyin" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="ej. hao3 o hǎo">
+    <p class="ayuda">Número del tono al final: 1 ā · 2 á · 3 ǎ · 4 à</p>`;
+  const inp=$('pyin'); inp.focus();
+  inp.oninput=()=>{ $('accion').disabled=!inp.value.trim(); };
+  inp.onkeydown=ev=>{ if(ev.key==='Enter' && !$('accion').disabled) $('accion').click(); };
+}
+function pPar(e){
+  const c=C[e.p.h];
+  e.ops=mezcla([e.p.a,e.p.b]); e.correcta=e.ops.indexOf(e.p.a);
+  $('ej').innerHTML=`<h3>Par tramposo: ¿qué lleva?</h3><div class="grande">${c.h}</div><p class="sub">${c.py} · ${c.es}</p><div style="height:14px"></div>
+    ${opcionesHTML(e.ops,true)}`; activaOpciones();
+}
+function pFrase(e){
+  const [,es,piezas,trampas]=e.f;
+  e.fichas=mezcla([...piezas,...trampas]).map(t=>({t,usada:false})); e.orden=[];
+  const pinta=()=>{
+    $('ej').innerHTML=`<h3>Traduce</h3><p style="font-size:20px;margin:0 0 10px">“${es}”</p>
+      <div class="linea">${e.orden.map((i,k)=>`<button class="ficha" data-k="${k}">${e.fichas[i].t}</button>`).join('')}</div>
+      <div class="fichas">${e.fichas.map((f,i)=>`<button class="ficha ${f.usada?'hueco':''}" data-i="${i}">${f.t}</button>`).join('')}</div>`;
+    document.querySelectorAll('.fichas .ficha').forEach(b=>b.onclick=()=>{ if(L.estado!=='pregunta')return; const i=+b.dataset.i; if(e.fichas[i].usada)return; e.fichas[i].usada=true; e.orden.push(i); pinta(); });
+    document.querySelectorAll('.linea .ficha').forEach(b=>b.onclick=()=>{ if(L.estado!=='pregunta')return; const k=+b.dataset.k; e.fichas[e.orden[k]].usada=false; e.orden.splice(k,1); pinta(); });
+    $('accion').disabled = e.orden.length===0;
+  };
+  pinta();
+}
+
+// ---------- pinyin ----------
+const MARCAS={a:'āáǎà',e:'ēéěè',i:'īíǐì',o:'ōóǒò',u:'ūúǔù',v:'ǖǘǚǜ'};
+function conMarca(base,t){
+  const s=base;
+  let idx;
+  if(s.includes('a')) idx=s.indexOf('a');
+  else if(s.includes('e')) idx=s.indexOf('e');
+  else if(s.includes('ou')) idx=s.indexOf('o');
+  else { idx=-1; for(let k=s.length-1;k>=0;k--) if('iouv'.includes(s[k])){ idx=k; break; } }
+  if(idx<0) return s;
+  return (s.slice(0,idx)+MARCAS[s[idx]][t-1]+s.slice(idx+1)).replace('v','ü');
+}
+function normaliza(x){
+  let s=x.toLowerCase().replace(/\s+/g,'').replace(/ü|u:/g,'v'), tono='';
+  for(const [v,m] of Object.entries(MARCAS)) for(let k=0;k<4;k++) if(s.includes(m[k])){ s=s.replace(m[k],v); tono=String(k+1); }
+  if(/[0-5]$/.test(s)){ tono=s.slice(-1); s=s.slice(0,-1); }
+  if(tono==='0') tono='5';
+  return {base:s, tono};
+}
+
+// ---------- comprobar ----------
+$('accion').onclick=()=>{
+  const e=L.actual;
+  if(L.estado==='fin'){ volver(); return; }
+  if(L.estado==='respondido'){ siguiente(); return; }
+  if(e.tipo==='intro'){ L.hechos++; siguiente(); return; }
+  let ok=false, sol='', extra='';
+  if(['significado','hanzi','tono','par'].includes(e.tipo)){
+    ok = L.sel===e.correcta;
+    document.querySelectorAll('.op').forEach((b,i)=>{ if(i===e.correcta) b.classList.add('ok'); else if(i===L.sel) b.classList.add('bad'); });
+    const c=C[e.tipo==='par'? e.p.h : e.hz];
+    sol = e.tipo==='par' ? e.p.a : (e.tipo==='significado'? c.es : e.tipo==='hanzi'? c.h : c.py);
+    extra = e.tipo==='par' ? e.p.por : `<span class="cjk">${c.h}</span> ${c.py} · ${c.es}`;
+  }else if(e.tipo==='escribe'){
+    const c=C[e.hz], r=normaliza($('pyin').value), want=normaliza(c.pn);
+    ok = r.base===want.base && r.tono===want.tono;
+    sol=c.py; extra = (!ok && r.base===want.base) ? 'Casi: el sonido está bien, pero el tono no.' : c.es;
+    $('pyin').disabled=true;
+  }else if(e.tipo==='frase'){
+    const [,es,piezas]=e.f;
+    ok = e.orden.map(i=>e.fichas[i].t).join('|')===piezas.join('|'); sol=piezas.join(' '); extra=es;
+  }
+  L.estado='respondido';
+  const clave = e.tipo==='par'? e.p.h : e.tipo==='frase'? e.f[0] : e.hz;
+  if(ok){
+    L.hechos++; if(!L.errados.has(e)) L.xpGanado++;
+    S.aciertos[clave]=(S.aciertos[clave]||0)+1;
+    setAbajo('ok','Continuar',`¡Bien! <small>${extra}</small>`);
+  }else{
+    L.errados.add(e); L.cola.push(e);   // vuelve al final hasta que salga bien
+    S.fallos[clave]=(S.fallos[clave]||0)+1;
+    setAbajo('bad','Entendido',`Respuesta: <span class="cjk">${sol}</span><small>${extra}</small>`);
+  }
+  $('accion').disabled=false; guardar(); avance();
+};
+
+function fin(){
+  const id=idL(L.ui,L.l), xp=10+L.xpGanado;
+  S.xp+=xp; S.hechas[id]=S.hechas[id]||new Date().toISOString();
+  if(S.ultimoDia!==hoy()){ S.racha = (S.ultimoDia===ayer()) ? S.racha+1 : 1; S.ultimoDia=hoy(); }
+  guardar();
+  $('avance').style.width='100%';
+  $('ej').innerHTML=`<div class="fin"><div class="big">🎉</div><h2>¡Lección completa!</h2>
+    <p style="color:var(--muted)">${UNIDADES[L.ui].t} · ${NOMBRES[L.l]}</p>
+    <div class="stats"><div><b>+${xp}</b>XP</div><div><b>🔥 ${S.racha}</b>racha</div><div><b>${L.errados.size}</b>corregidos</div></div>
+    ${L.errados.size?'<p style="color:var(--muted)">Lo que fallaste te volvió a salir hasta que lo sacaste.</p>':'<p style="color:var(--ok)">¡Sin errores!</p>'}</div>`;
+  setAbajo('', 'Continuar'); $('accion').disabled=false; L.estado='fin';
+}
+
+// ---------- extras ----------
+$('exportar').onclick=()=>{
+  const data={app:'hanzi-camino',version:1,exportado:new Date().toISOString(),xp:S.xp,racha:S.racha,ultimo_dia:S.ultimoDia,
+    lecciones_hechas:S.hechas,aciertos:S.aciertos,fallos:S.fallos};
+  const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([JSON.stringify(data,null,2)],{type:'application/json'}));
+  a.download='hanzi-progreso-'+hoy()+'.json'; a.click();
+};
+$('borrar').onclick=()=>{ if(confirm('¿Borrar todo tu progreso?')){ S=VACIO(); guardar(); pintaCamino(); } };
+pintaCamino();
+if('serviceWorker' in navigator && location.protocol.startsWith('http')) navigator.serviceWorker.register('sw.js');
+</script>
+</body>
+</html>
