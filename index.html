@@ -4,97 +4,117 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 <title>汉字 · Camino</title>
-<meta name="theme-color" content="#14111c">
+<meta name="theme-color" content="#e8e5dc">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-192.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <style>
+  @font-face{font-family:"Kai";src:url(kai.woff2) format("woff2");font-display:swap}
   :root{
-    --bg:#14111c; --card:#1f1a2b; --card2:#2a2339; --line:#3a3150; --txt:#ece7f5; --muted:#a59cb8;
-    --acc:#c9a2ff; --acc2:#7fd6c2; --ok:#58cc8a; --okbg:#173326; --bad:#ff7b7b; --badbg:#3a1f26;
-    --cjk:"Noto Sans SC","PingFang SC","Microsoft YaHei","Hiragino Sans GB","Source Han Sans SC",sans-serif;
+    --paper:#e8e5dc; --sheet:#f3f1ea; --ink:#1d1b18; --ink2:#4a463e; --muted:#7b7568; --line:#cfc9bb;
+    --seal:#b5312b; --jade:#2f6b4c; --kai:"Kai",KaiTi,STKaiti,"Kaiti SC",serif;
+    --cjk:var(--kai);
   }
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-  html,body{margin:0;background:var(--bg);color:var(--txt);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+  html,body{margin:0;background:var(--paper);color:var(--ink);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
   button{font:inherit;color:inherit;border:0;cursor:pointer;background:none}
-  .wrap{max-width:560px;margin:0 auto;padding:0 16px}
-  .cjk{font-family:var(--cjk)}
+  .wrap{max-width:560px;margin:0 auto;padding:0 18px}
+  .cjk{font-family:var(--kai)}
   /* ---------- camino ---------- */
-  #camino header{position:sticky;top:0;background:#14111cf0;backdrop-filter:blur(6px);z-index:2;
-    display:flex;justify-content:space-between;align-items:center;padding:14px 16px;border-bottom:1px solid var(--line)}
-  #camino header h1{margin:0;font-size:18px}
-  .chips{display:flex;gap:14px;font-weight:700}
-  .unidad{margin:22px 0 8px;border-radius:18px;padding:14px 16px;background:var(--card)}
-  .unidad.locked{opacity:.45}
+  #camino header{position:sticky;top:0;background:#e8e5dcf2;backdrop-filter:blur(4px);z-index:2;
+    display:flex;justify-content:space-between;align-items:center;padding:12px 18px;border-bottom:1.5px solid var(--ink)}
+  #camino header h1{margin:0;font-family:var(--kai);font-size:30px;font-weight:400;letter-spacing:4px}
+  .chips{display:flex;gap:16px;font-weight:700;font-size:15px}
+  .unidad{margin:24px 0 8px;background:var(--sheet);padding:16px 16px 14px 22px;border:1.5px solid var(--ink);position:relative}
+  .unidad::before{content:"";position:absolute;left:10px;top:0;bottom:0;width:1.5px;background:var(--seal);opacity:.55}
+  .unidad.locked{opacity:.5}
+  .unidad .num{font-family:var(--kai);font-size:22px;color:var(--seal)}
   .unidad h2{margin:0;font-size:17px}
-  .unidad p{margin:4px 0 0;color:var(--muted);font-size:14px}
-  .unidad .rads{font-family:var(--cjk);font-size:20px;color:var(--acc);margin-top:6px;letter-spacing:6px}
-  .lecciones{display:flex;flex-direction:column;align-items:center;gap:14px;padding:16px 0 4px}
-  .nodo{width:74px;height:74px;border-radius:50%;background:var(--card2);border:4px solid var(--line);
-    display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:12px;color:var(--muted);text-align:center;line-height:1.1}
-  .nodo b{font-size:22px;color:var(--txt)}
-  .nodo.done{background:#2b3d33;border-color:var(--ok)}
-  .nodo.now{background:var(--acc);border-color:#e4cfff;color:#1b1428;box-shadow:0 0 0 6px #c9a2ff33}
-  .nodo.now b{color:#1b1428}
+  .unidad p{margin:3px 0 0;color:var(--muted);font-size:14px}
+  .unidad .rads{font-family:var(--kai);font-size:24px;margin-top:6px;letter-spacing:8px}
+  .lecciones{display:flex;justify-content:space-around;padding:16px 0 2px}
+  .nodo{display:flex;flex-direction:column;align-items:center;gap:6px;font-size:12px;color:var(--muted)}
+  .cuadro{width:66px;height:66px;display:flex;align-items:center;justify-content:center;font-family:var(--kai);font-size:34px;
+    border:1.5px dashed var(--line);color:var(--line);position:relative;
+    background:linear-gradient(to right,transparent 49.5%,#cfc9bb66 49.5%,#cfc9bb66 50.5%,transparent 50.5%),
+               linear-gradient(to bottom,transparent 49.5%,#cfc9bb66 49.5%,#cfc9bb66 50.5%,transparent 50.5%)}
+  .nodo.now .cuadro{background:var(--ink);color:var(--sheet);border:1.5px solid var(--ink)}
+  .nodo.now{color:var(--ink);font-weight:700}
+  .nodo.done .cuadro{background:var(--seal);color:#f6e9e4;border:none;border-radius:6px;transform:rotate(-5deg);
+    box-shadow:inset 0 0 0 3px var(--seal),inset 0 0 0 5px #f6e9e4}
   .nodo:disabled{cursor:default}
-  .nodo:nth-child(2){transform:translateX(-46px)} .nodo:nth-child(3){transform:translateX(46px)}
   .pie{color:var(--muted);font-size:13px;text-align:center;margin:30px 0 40px}
-  .pie button{color:var(--acc);text-decoration:underline;margin:0 6px}
+  .pie button{color:var(--ink2);text-decoration:underline;margin:0 6px}
   /* ---------- lección ---------- */
   #leccion{display:none;min-height:100vh;flex-direction:column}
-  .top{display:flex;align-items:center;gap:12px;padding:16px}
-  .top .x{font-size:24px;color:var(--muted);width:32px}
-  .barra{flex:1;height:14px;background:var(--card2);border-radius:99px;overflow:hidden}
-  .barra i{display:block;height:100%;width:0;background:var(--ok);border-radius:99px;transition:width .3s}
-  .ej{flex:1;padding:6px 18px 160px}
-  .ej h3{margin:6px 0 18px;font-size:20px}
-  .grande{font-family:var(--cjk);font-size:96px;text-align:center;line-height:1.15;margin:4px 0 14px}
-  .sub{color:var(--muted);text-align:center;margin-top:-6px}
+  .top{display:flex;align-items:center;gap:14px;padding:18px}
+  .top .x{font-size:22px;color:var(--ink2);width:28px}
+  .barra{flex:1;height:8px;background:var(--line)}
+  .barra i{display:block;height:100%;width:0;background:var(--ink);transition:width .35s}
+  .ej{flex:1;padding:4px 18px 170px}
+  .ej h3{margin:4px 0 14px;font-size:19px;font-weight:600}
+  .mizi{width:200px;height:200px;margin:8px auto 18px;position:relative;border:2px solid var(--seal);background:
+      linear-gradient(to right,transparent 49.6%,#b5312b55 49.6%,#b5312b55 50.4%,transparent 50.4%),
+      linear-gradient(to bottom,transparent 49.6%,#b5312b55 49.6%,#b5312b55 50.4%,transparent 50.4%),
+      linear-gradient(45deg,transparent 49.7%,#b5312b30 49.7%,#b5312b30 50.3%,transparent 50.3%),
+      linear-gradient(-45deg,transparent 49.7%,#b5312b30 49.7%,#b5312b30 50.3%,transparent 50.3%)}
+  .mizi>span{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:var(--kai);font-size:160px;line-height:1}
+  .sello{position:absolute;right:-22px;bottom:-18px;width:60px;height:60px;border-radius:6px;background:var(--seal);color:#f6e9e4;
+    font-family:var(--kai);font-style:normal;font-size:34px;display:flex;align-items:center;justify-content:center;transform:rotate(-8deg);
+    box-shadow:inset 0 0 0 3px var(--seal),inset 0 0 0 5px #f6e9e4;animation:sellar .22s ease-out}
+  .sello.mal{background:var(--ink2);box-shadow:inset 0 0 0 3px var(--ink2),inset 0 0 0 5px #e8e5dc}
+  .sello.nuevo{right:auto;left:-22px;top:-18px;bottom:auto;width:46px;height:46px;font-size:26px;animation:none}
+  @keyframes sellar{from{transform:rotate(-8deg) scale(1.6);opacity:0}to{transform:rotate(-8deg) scale(1);opacity:1}}
+  @media (prefers-reduced-motion:reduce){.sello{animation:none}}
+  .sub{color:var(--muted);text-align:center;margin:-6px 0 0}
   .opciones{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-  .op{background:var(--card);border:2px solid var(--line);border-radius:14px;padding:16px 10px;font-size:17px;min-height:64px}
-  .op.cjk{font-family:var(--cjk);font-size:34px;padding:8px}
-  .op.sel{border-color:var(--acc);background:#2b2142}
-  .op.ok{border-color:var(--ok);background:var(--okbg)} .op.bad{border-color:var(--bad);background:var(--badbg)}
+  .op{background:var(--sheet);border:1.5px solid var(--ink);padding:16px 8px;font-size:16px;min-height:60px}
+  .op.cjk{font-family:var(--kai);font-size:42px;padding:6px;
+    background:linear-gradient(to right,transparent 49.6%,#b5312b26 49.6%,#b5312b26 50.4%,transparent 50.4%),
+               linear-gradient(to bottom,transparent 49.6%,#b5312b26 49.6%,#b5312b26 50.4%,transparent 50.4%),var(--sheet)}
+  .op.sel{background:var(--ink);color:var(--sheet)}
+  .op.ok{background:var(--jade);color:#eef5ef;border-color:var(--jade)}
+  .op.bad{background:transparent;color:var(--muted);border-style:dashed;text-decoration:line-through}
+  .op:focus-visible,.btn:focus-visible,.cuadro:focus-visible{outline:3px solid var(--seal);outline-offset:2px}
   .tonos{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
   .tonos .op{font-size:22px}
-  input.py{width:100%;font:inherit;font-size:24px;text-align:center;padding:14px;border-radius:14px;border:2px solid var(--line);
-    background:var(--card);color:var(--txt);outline:none}
-  input.py:focus{border-color:var(--acc)}
+  input.py{width:100%;font:inherit;font-size:24px;text-align:center;padding:14px;border:1.5px solid var(--ink);
+    background:var(--sheet);color:var(--ink);outline:none;border-radius:0}
+  input.py:focus{box-shadow:0 0 0 3px #b5312b55}
   .ayuda{color:var(--muted);font-size:13px;text-align:center;margin-top:8px}
-  .linea{min-height:66px;border-bottom:2px solid var(--line);display:flex;flex-wrap:wrap;gap:8px;padding:8px 0;margin-bottom:18px}
+  .linea{min-height:62px;border-bottom:1.5px solid var(--ink);display:flex;flex-wrap:wrap;gap:8px;padding:8px 0;margin-bottom:18px}
   .fichas{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
-  .ficha{background:var(--card);border:2px solid var(--line);border-bottom-width:4px;border-radius:12px;padding:8px 12px;font-family:var(--cjk);font-size:24px}
+  .ficha{background:var(--sheet);border:1.5px solid var(--ink);box-shadow:2px 2px 0 var(--ink);padding:6px 12px;font-family:var(--kai);font-size:28px}
   .ficha.hueco{visibility:hidden}
-  .intro{background:var(--card);border-radius:20px;padding:18px;text-align:center}
-  .intro .tag{display:inline-block;background:var(--acc);color:#1b1428;font-weight:700;font-size:12px;padding:3px 10px;border-radius:99px}
-  .intro .py{font-size:26px;color:var(--acc2)} .intro .es{font-size:20px;margin:2px 0 12px}
-  .partes{display:flex;justify-content:center;gap:8px;font-family:var(--cjk);font-size:28px;margin:6px 0}
-  .partes span{background:var(--card2);border-radius:10px;padding:4px 12px}
-  .partes span.r{outline:2px solid var(--acc)}
-  .nota{color:var(--muted);font-size:14px;margin:6px 0 0}
-  .abajo{position:fixed;left:0;right:0;bottom:0;padding:16px;border-top:1px solid var(--line);background:var(--bg)}
-  .abajo.ok{background:var(--okbg);border-color:transparent} .abajo.bad{background:var(--badbg);border-color:transparent}
+  .intro{text-align:center}
+  .intro .py{font-size:26px;color:var(--seal);margin-top:4px} .intro .es{font-size:20px;margin:2px 0 12px}
+  .partes{display:flex;justify-content:center;gap:8px;font-family:var(--kai);font-size:30px;margin:6px 0}
+  .partes span{border:1.5px solid var(--line);padding:2px 12px;background:var(--sheet)}
+  .partes span.r{border-color:var(--seal);color:var(--seal)}
+  .nota{color:var(--ink2);font-size:14px;margin:8px 0 0;line-height:1.45}
+  .abajo{position:fixed;left:0;right:0;bottom:0;padding:16px 18px;border-top:1.5px solid var(--ink);background:var(--paper)}
+  .abajo.ok{background:#dfe8de} .abajo.bad{background:#dcd6ca}
   .abajo .in{max-width:560px;margin:0 auto}
-  .fb{font-weight:800;font-size:18px;margin-bottom:8px;display:none}
-  .fb small{display:block;font-weight:500;font-size:15px;margin-top:2px}
-  .abajo.ok .fb{display:block;color:var(--ok)} .abajo.bad .fb{display:block;color:var(--bad)}
-  .btn{width:100%;padding:15px;border-radius:14px;font-weight:800;font-size:16px;background:var(--acc);color:#1b1428;letter-spacing:.03em}
-  .btn:disabled{background:var(--card2);color:var(--muted)}
-  .abajo.ok .btn{background:var(--ok);color:#0e2418} .abajo.bad .btn{background:var(--bad);color:#2a0c10}
-  .fin{text-align:center;padding-top:50px}
-  .fin .big{font-size:64px}
+  .fb{font-weight:700;font-size:18px;margin-bottom:10px;display:none}
+  .fb small{display:block;font-weight:400;font-size:15px;margin-top:3px;color:var(--ink2)}
+  .abajo.ok .fb{display:block;color:var(--jade)} .abajo.bad .fb{display:block;color:var(--ink)}
+  .btn{width:100%;padding:15px;font-weight:800;font-size:15px;background:var(--ink);color:var(--sheet);letter-spacing:.14em}
+  .btn:disabled{background:var(--line);color:var(--muted)}
+  .abajo.ok .btn{background:var(--jade)}
+  .fin{text-align:center;padding-top:40px}
+  .fin .mizi{width:150px;height:150px} .fin .mizi>span{font-size:110px;color:var(--seal)}
   .fin .stats{display:flex;gap:10px;justify-content:center;margin:20px 0}
-  .fin .stats div{background:var(--card);border-radius:14px;padding:12px 16px;min-width:96px}
-  .fin .stats b{display:block;font-size:24px}
+  .fin .stats div{background:var(--sheet);border:1.5px solid var(--ink);padding:10px 14px;min-width:92px;font-size:13px;color:var(--ink2)}
+  .fin .stats b{display:block;font-size:24px;color:var(--ink)}
 </style>
 </head>
 <body>
 
 <section id="camino">
   <header>
-    <h1><span class="cjk" style="color:var(--acc)">汉字</span> Camino</h1>
-    <div class="chips"><span>🔥 <b id="racha">0</b></span><span>⭐ <b id="xp">0</b></span></div>
+    <h1>汉字</h1>
+    <div class="chips"><span>Racha <b id="racha">0</b></span><span>XP <b id="xp">0</b></span></div>
   </header>
   <div class="wrap" id="unidades"></div>
   <div class="pie wrap">
@@ -126,7 +146,7 @@ const C = {};
 function h(hz,py,pn,es,rad,son){ C[hz]={h:hz,py,pn,es,rad,son}; return hz; }
 
 const UNIDADES = [
- { t:'1 · Personas', d:'亻 女 子: gente y familia', rads:'亻女子',
+ { t:'1 · Personas', d:'gente y familia', rads:'亻女子',
    hz:[h('你','nǐ','ni3','tú','亻'), h('我','wǒ','wo3','yo','戈'), h('他','tā','ta1','él','亻'), h('她','tā','ta1','ella','女'),
        h('好','hǎo','hao3','bien, bueno','女'), h('是','shì','shi4','ser','日'), h('们','men','men5','(plural de personas)','亻','门 mén'),
        h('妈','mā','ma1','mamá','女','马 mǎ'), h('姐','jiě','jie3','hermana mayor','女','且 qiě'), h('人','rén','ren2','persona','人'),
@@ -135,7 +155,7 @@ const UNIDADES = [
            ['我是你妈妈','Soy tu mamá',['我','是','你','妈妈'],['他','姐姐']],
            ['她们是孩子','Ellas son niñas',['她们','是','孩子'],['我们','好']]],
    pares:[] },
- { t:'2 · Boca y palabras', d:'口 讠: comer, beber, hablar', rads:'口讠',
+ { t:'2 · Boca y palabras', d:'comer, beber, hablar', rads:'口讠',
    hz:[h('吃','chī','chi1','comer','口'), h('喝','hē','he1','beber','口'), h('吗','ma','ma5','¿…? (pregunta)','口','马 mǎ'),
        h('叫','jiào','jiao4','llamarse','口'), h('说','shuō','shuo1','hablar, decir','讠'), h('语','yǔ','yu3','idioma','讠'),
        h('谢','xiè','xie4','agradecer','讠'), h('汉','hàn','han4','han (chino)','氵'), h('很','hěn','hen3','muy','彳'),
@@ -146,7 +166,7 @@ const UNIDADES = [
            ['我是中国人','Soy chino',['我','是','中国','人'],['不','汉语']],
            ['谢谢你','Gracias',['谢谢','你'],['我','吗']]],
    pares:[] },
- { t:'3 · Naturaleza', d:'氵 木 日 火 灬 艹', rads:'氵木日火灬艹',
+ { t:'3 · Naturaleza', d:'agua, árboles, sol, fuego y plantas', rads:'氵木日火灬艹',
    hz:[h('河','hé','he2','río','氵'), h('海','hǎi','hai3','mar','氵'), h('洗','xǐ','xi3','lavar','氵'), h('林','lín','lin2','bosque','木'),
        h('树','shù','shu4','árbol','木'), h('明','míng','ming2','brillante','日'), h('晚','wǎn','wan3','noche, tarde','日','免 miǎn'),
        h('灯','dēng','deng1','lámpara','火','丁 dīng'), h('热','rè','re4','caliente','灬'), h('点','diǎn','dian3','punto, un poco','灬'),
@@ -161,7 +181,7 @@ const UNIDADES = [
            {h:'热',a:'灬',b:'火',por:'El fuego va abajo: 灬 (cuatro puntos).'},
            {h:'茶',a:'艹',b:'⺮',por:'Dos cruces = hierba (艹).'},
            {h:h('等','děng','deng3','esperar','⺮'),a:'⺮',b:'艹',por:'Dos “k” pequeñas = bambú (⺮).'} ] },
- { t:'4 · Cuerpo y acciones', d:'扌 目 足 忄 心 月', rads:'扌目足忄心月',
+ { t:'4 · Cuerpo y acciones', d:'manos, ojos, pies, corazón y cuerpo', rads:'扌目足忄心月',
    hz:[h('打','dǎ','da3','golpear, jugar (打球)','扌'), h('找','zhǎo','zhao3','buscar','扌'), h('眼','yǎn','yan3','ojo','目'),
        h('睡','shuì','shui4','dormir','目'), h('路','lù','lu4','camino (ruta)','足'), h('跑','pǎo','pao3','correr','足','包 bāo'),
        h('忙','máng','mang2','ocupado','忄','亡 wáng'), h('快','kuài','kuai4','rápido','忄','夬 guài'),
@@ -175,7 +195,7 @@ const UNIDADES = [
            {h:'明',a:'月 luna',b:'月 carne',por:'Va de luz: es luna.'},
            {h:'快',a:'忄',b:'心',por:'El corazón va al lado: 忄.'},
            {h:'想',a:'心',b:'忄',por:'El corazón va abajo: 心.'} ] },
- { t:'5 · Comida, ropa y cosas', d:'饣 钅 衤 礻 纟 王', rads:'饣钅衤礻纟王',
+ { t:'5 · Comida, ropa y cosas', d:'comida, metal, ropa, hilo y jade', rads:'饣钅衤礻纟王',
    hz:[h('饭','fàn','fan4','comida, arroz cocido','饣','反 fǎn'), h('饿','è','e4','tener hambre','饣'), h('钱','qián','qian2','dinero','钅'),
        h('裤','kù','ku4','pantalón','衤','库 kù'), h('神','shén','shen2','espíritu','礻','申 shēn'), h('红','hóng','hong2','rojo','纟'),
        h('给','gěi','gei3','dar','纟'), h('玩','wán','wan2','jugar','王','元 yuán'), h('球','qiú','qiu2','pelota','王','求 qiú')],
@@ -189,7 +209,7 @@ const UNIDADES = [
            {h:h('家','jiā','jia1','casa','宀'),a:'宀',b:'冖',por:'Con punto arriba = 宀, techo, casa.'},
            {h:h('写','xiě','xie3','escribir','冖'),a:'冖',b:'宀',por:'Sin punto = 冖, cubrir.'},
            {h:'玩',a:'王 jade',b:'王 rey',por:'A la izquierda, 王 es jade (玉 sin el punto).'} ] },
- { t:'6 · Movimiento y acciones', d:'彳 辶 攵 刂 走 力', rads:'彳辶攵刂走力',
+ { t:'6 · Movimiento y acciones', d:'caminar, avanzar, actuar, cortar y fuerza', rads:'彳辶攵刂走力',
    hz:[h('往','wǎng','wang3','hacia','彳'), h('街','jiē','jie1','calle','彳'), h('这','zhè','zhe4','este, esto','辶'),
        h('进','jìn','jin4','entrar','辶'), h('道','dào','dao4','vía, el Dao','辶'), h('教','jiāo','jiao1','enseñar','攵'),
        h('放','fàng','fang4','soltar, poner','攵','方 fāng'), h('到','dào','dao4','llegar','刂'), h('别','bié','bie2','otro; no (¡no hagas!)','刂'),
@@ -204,7 +224,7 @@ const UNIDADES = [
            {h:'放',a:'攵',b:'文',por:'Es un verbo: lleva 攵, acción.'},
            {h:'往',a:'彳',b:'亻',por:'Dos trazos inclinados = 彳 (caminar); uno = 亻 (persona).'},
            {h:'他',a:'亻',b:'彳',por:'Un trazo inclinado = 亻 (persona).'} ] },
- { t:'7 · Lugares y construcciones', d:'土 阝 宀 穴 冖 广 门 囗', rads:'土阝宀穴广门',
+ { t:'7 · Lugares y construcciones', d:'tierra, colinas, techos y puertas', rads:'土阝宀穴广门',
    hz:[h('地','dì','di4','tierra, suelo','土'), h('场','chǎng','chang3','lugar (plaza, cancha)','土'), h('附','fù','fu4','cerca de','阝','付 fù'),
        h('阳','yáng','yang2','sol (en 太阳)','阝'), h('院','yuàn','yuan4','patio','阝'), h('都','dōu','dou1','todos','阝'),
        h('那','nà','na4','eso, aquel','阝'), h('部','bù','bu4','parte','阝'), h('室','shì','shi4','cuarto, sala','宀'),
@@ -221,7 +241,7 @@ const UNIDADES = [
            {h:'室',a:'宀',b:'冖',por:'Con punto arriba = 宀, techo, casa.'},
            {h:'军',a:'冖',b:'宀',por:'Sin punto = 冖, cubrir.'},
            {h:'空',a:'穴',b:'宀',por:'穴 = 宀 con dos trazos abajo: cueva, hueco.'} ] },
- { t:'8 · Animales, clima y comida', d:'犭 鸟 虫 雨 石 米 欠', rads:'犭鸟虫雨石米欠',
+ { t:'8 · Animales, clima y comida', d:'animales, aves, lluvia, piedra y arroz', rads:'犭鸟虫雨石米欠',
    hz:[h('猫','māo','mao1','gato','犭','苗 miáo'), h('狗','gǒu','gou3','perro','犭'), h('鸡','jī','ji1','gallina, pollo','鸟'),
        h('鸭','yā','ya1','pato','鸟','甲 jiǎ'), h('虾','xiā','xia1','camarón','虫','下 xià'), h('雪','xuě','xue3','nieve','雨'),
        h('零','líng','ling2','cero','雨','令 lìng'), h('碗','wǎn','wan3','tazón','石','宛 wǎn'), h('糖','táng','tang2','azúcar, dulce','米','唐 táng'),
@@ -230,7 +250,7 @@ const UNIDADES = [
            ['我想吃鸡','Quiero comer pollo',['我','想','吃','鸡'],['狗','鸭']]],
    pares:[ {h:'冷',a:'冫',b:'氵',por:'Dos gotas = hielo, frío.'},
            {h:'海',a:'氵',b:'冫',por:'Tres gotas = agua.'} ] },
- { t:'9 · Cosas, dinero y salud', d:'贝 页 疒 钅 纟 车 马 王', rads:'贝页疒车马',
+ { t:'9 · Cosas, dinero y salud', d:'dinero, cabeza, enfermedad y vehículos', rads:'贝页疒车马',
    hz:[h('贵','guì','gui4','caro','贝'), h('题','tí','ti2','tema, pregunta','页'), h('病','bìng','bing4','enfermedad','疒','丙 bǐng'),
        h('疼','téng','teng2','doler','疒'), h('铁','tiě','tie3','hierro','钅'), h('经','jīng','jing1','pasar por','纟'),
        h('骑','qí','qi2','montar (a caballo, en bici)','马','奇 qí'), h('驴','lǘ','lv2','burro','马'), h('较','jiào','jiao4','comparar','车','交 jiāo'),
@@ -262,9 +282,9 @@ function pintaCamino(){
     const nodos=[0,1,2].map(l=>{
       const hecha=!!S.hechas[idL(ui,l)], ok=desbloqueada(ui,l);
       return `<button class="nodo ${hecha?'done':(ok?'now':'')}" data-u="${ui}" data-l="${l}" ${ok?'':'disabled'}>
-              <b>${hecha?'✓':(l===2?'★':l+1)}</b>${['Parte 1','Parte 2','Repaso'][l]}</button>`;
+              <span class="cuadro">${hecha?'完':['一','二','复'][l]}</span>${['Parte 1','Parte 2','Repaso'][l]}</button>`;
     }).join('');
-    return `<div class="unidad ${desbloqueada(ui,0)?'':'locked'}"><h2>${u.t}</h2><p>${u.d}</p><div class="rads">${u.rads}</div>
+    return `<div class="unidad ${desbloqueada(ui,0)?'':'locked'}"><div class="num">第${'一二三四五六七八九'[ui]}课</div><h2>${u.t.replace(/^\d+ · /,'')}</h2><p>${u.d}</p><div class="rads">${u.rads}</div>
             <div class="lecciones">${nodos}</div></div>`;
   }).join('');
   document.querySelectorAll('.nodo:not([disabled])').forEach(b=>b.onclick=()=>empezar(+b.dataset.u,+b.dataset.l));
@@ -326,7 +346,7 @@ function activaOpciones(){
 
 function pIntro(e){
   const c=C[e.hz];
-  $('ej').innerHTML=`<div class="intro"><span class="tag">NUEVO</span><div class="grande">${c.h}</div>
+  $('ej').innerHTML=`<div class="intro"><div class="mizi"><span>${c.h}</span><i class="sello nuevo">新</i></div>
     <div class="py">${c.py}</div><div class="es">${c.es}</div>
     <div class="partes"><span class="r">${c.rad}</span>${c.son?`<span>${c.son.split(' ')[0]}</span>`:''}</div>
     <p class="nota">Radical <b class="cjk">${c.rad}</b>: ${RADS[c.rad]||''}${c.son?` · suena parecido a <b class="cjk">${c.son}</b>`:''}</p></div>`;
@@ -335,7 +355,7 @@ function pSignificado(e){
   const c=C[e.hz];
   const malas=toma([...new Set(e.pool.filter(x=>x!==e.hz).map(x=>C[x].es))].filter(s=>s!==c.es),3);
   e.ops=mezcla([c.es,...malas]); e.correcta=e.ops.indexOf(c.es);
-  $('ej').innerHTML=`<h3>¿Qué significa?</h3><div class="grande">${c.h}</div>${opcionesHTML(e.ops,false)}`; activaOpciones();
+  $('ej').innerHTML=`<h3>¿Qué significa?</h3><div class="mizi"><span>${c.h}</span></div>${opcionesHTML(e.ops,false)}`; activaOpciones();
 }
 function pHanzi(e){
   const c=C[e.hz];
@@ -343,17 +363,17 @@ function pHanzi(e){
   const otros=e.pool.filter(x=>x!==e.hz && !parecidos.includes(x) && C[x].es!==c.es);
   const malas=[...toma(parecidos,2), ...toma(otros,3)].slice(0,3);
   e.ops=mezcla([c.h,...malas]); e.correcta=e.ops.indexOf(c.h);
-  $('ej').innerHTML=`<h3>Elige el hanzi de: <span style="color:var(--acc2)">“${c.es}”</span></h3>${opcionesHTML(e.ops,true)}`; activaOpciones();
+  $('ej').innerHTML=`<h3>Elige el hanzi de: <span style="color:var(--seal)">“${c.es}”</span></h3>${opcionesHTML(e.ops,true)}`; activaOpciones();
 }
 function pTono(e){
   const c=C[e.hz], base=c.pn.slice(0,-1);
   e.ops=[1,2,3,4].map(t=>conMarca(base,t)); e.correcta=+c.pn.slice(-1)-1;
-  $('ej').innerHTML=`<h3>¿Con qué tono se dice?</h3><div class="grande">${c.h}</div><p class="sub">${c.es}</p><div style="height:14px"></div>
+  $('ej').innerHTML=`<h3>¿Con qué tono se dice?</h3><div class="mizi"><span>${c.h}</span></div><p class="sub">${c.es}</p><div style="height:14px"></div>
     <div class="tonos">${e.ops.map((o,i)=>`<button class="op" data-i="${i}">${o}</button>`).join('')}</div>`; activaOpciones();
 }
 function pEscribe(e){
   const c=C[e.hz];
-  $('ej').innerHTML=`<h3>Escribe el pinyin con su tono</h3><div class="grande">${c.h}</div>
+  $('ej').innerHTML=`<h3>Escribe el pinyin con su tono</h3><div class="mizi"><span>${c.h}</span></div>
     <input class="py" id="pyin" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="ej. hao3 o hǎo">
     <p class="ayuda">Número del tono al final: 1 ā · 2 á · 3 ǎ · 4 à</p>`;
   const inp=$('pyin'); inp.focus();
@@ -363,7 +383,7 @@ function pEscribe(e){
 function pPar(e){
   const c=C[e.p.h];
   e.ops=mezcla([e.p.a,e.p.b]); e.correcta=e.ops.indexOf(e.p.a);
-  $('ej').innerHTML=`<h3>Par tramposo: ¿qué lleva?</h3><div class="grande">${c.h}</div><p class="sub">${c.py} · ${c.es}</p><div style="height:14px"></div>
+  $('ej').innerHTML=`<h3>Par tramposo: ¿qué lleva?</h3><div class="mizi"><span>${c.h}</span></div><p class="sub">${c.py} · ${c.es}</p><div style="height:14px"></div>
     ${opcionesHTML(e.ops,true)}`; activaOpciones();
 }
 function pFrase(e){
@@ -400,6 +420,7 @@ function normaliza(x){
   return {base:s, tono};
 }
 
+function sellar(ch){ const m=document.querySelector('#ej .mizi'); if(m) m.insertAdjacentHTML('beforeend',`<i class="sello ${ch==='错'?'mal':''}">${ch}</i>`); }
 // ---------- comprobar ----------
 $('accion').onclick=()=>{
   const e=L.actual;
@@ -427,11 +448,13 @@ $('accion').onclick=()=>{
   if(ok){
     L.hechos++; if(!L.errados.has(e)) L.xpGanado++;
     S.aciertos[clave]=(S.aciertos[clave]||0)+1;
-    setAbajo('ok','Continuar',`¡Bien! <small>${extra}</small>`);
+    sellar('对');
+    setAbajo('ok','Continuar',`对，¡bien! <small>${extra}</small>`);
   }else{
     L.errados.add(e); L.cola.push(e);   // vuelve al final hasta que salga bien
     S.fallos[clave]=(S.fallos[clave]||0)+1;
-    setAbajo('bad','Entendido',`Respuesta: <span class="cjk">${sol}</span><small>${extra}</small>`);
+    sellar('错');
+    setAbajo('bad','Entendido',`Era: <span class="cjk">${sol}</span><small>${extra}</small>`);
   }
   $('accion').disabled=false; guardar(); avance();
 };
@@ -442,10 +465,10 @@ function fin(){
   if(S.ultimoDia!==hoy()){ S.racha = (S.ultimoDia===ayer()) ? S.racha+1 : 1; S.ultimoDia=hoy(); }
   guardar();
   $('avance').style.width='100%';
-  $('ej').innerHTML=`<div class="fin"><div class="big">🎉</div><h2>¡Lección completa!</h2>
+  $('ej').innerHTML=`<div class="fin"><div class="mizi"><span>完</span></div><h2>Lección completa</h2>
     <p style="color:var(--muted)">${UNIDADES[L.ui].t} · ${NOMBRES[L.l]}</p>
-    <div class="stats"><div><b>+${xp}</b>XP</div><div><b>🔥 ${S.racha}</b>racha</div><div><b>${L.errados.size}</b>corregidos</div></div>
-    ${L.errados.size?'<p style="color:var(--muted)">Lo que fallaste te volvió a salir hasta que lo sacaste.</p>':'<p style="color:var(--ok)">¡Sin errores!</p>'}</div>`;
+    <div class="stats"><div><b>+${xp}</b>XP</div><div><b>${S.racha}</b>días de racha</div><div><b>${L.errados.size}</b>corregidos</div></div>
+    ${L.errados.size?'<p style="color:var(--muted)">Lo que fallaste te volvió a salir hasta que lo sacaste.</p>':'<p style="color:var(--jade)">Sin errores.</p>'}</div>`;
   setAbajo('', 'Continuar'); $('accion').disabled=false; L.estado='fin';
 }
 
