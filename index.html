@@ -102,24 +102,130 @@
   .btn{width:100%;padding:15px;font-weight:800;font-size:15px;background:var(--ink);color:var(--sheet);letter-spacing:.14em}
   .btn:disabled{background:var(--line);color:var(--muted)}
   .abajo.ok .btn{background:var(--jade)}
+  /* ---------- palabras del libro (varios caracteres en fila) ---------- */
+  .seccion{font-family:var(--kai);font-size:22px;margin:28px 0 -10px;color:var(--ink2);border-bottom:1.5px solid var(--line);padding-bottom:4px}
+  .seccion small{font-family:system-ui,-apple-system,sans-serif;font-size:13px;color:var(--muted);margin-left:8px}
+  .palabra{display:flex;justify-content:center;position:relative;width:max-content;margin:8px auto 18px}
+  .palabra .mizi{width:var(--s);height:var(--s);margin:0}
+  .palabra .mizi+.mizi{margin-left:-2px}
+  .palabra .mizi>span{font-size:calc(var(--s)*.8)}
+  .pron .op{font-size:21px}
+  .op.pal:not(.sel):not(.ok):not(.bad){background:var(--sheet)}
   .fin{text-align:center;padding-top:40px}
   .fin .mizi{width:150px;height:150px} .fin .mizi>span{font-size:110px;color:var(--seal)}
   .fin .stats{display:flex;gap:10px;justify-content:center;margin:20px 0}
   .fin .stats div{background:var(--sheet);border:1.5px solid var(--ink);padding:10px 14px;min-width:92px;font-size:13px;color:var(--ink2)}
   .fin .stats b{display:block;font-size:24px;color:var(--ink)}
+  /* ---------- apartados (barra de abajo) ---------- */
+  #camino{padding-bottom:84px}
+  .vista{display:none} .vista.on{display:block}
+  nav#tabs{position:fixed;left:0;right:0;bottom:0;display:flex;background:var(--paper);border-top:1.5px solid var(--ink);z-index:5;
+    padding-bottom:env(safe-area-inset-bottom)}
+  nav#tabs button{flex:1;padding:8px 0 9px;display:flex;flex-direction:column;align-items:center;gap:1px;font-size:11px;color:var(--muted)}
+  nav#tabs button b{font-family:var(--kai);font-weight:400;font-size:25px;line-height:1.1}
+  nav#tabs button.on{color:var(--seal)} nav#tabs button.on b{color:var(--seal)}
+  /* Hoy */
+  .hoy{margin:18px 0 6px;background:var(--ink);color:var(--sheet);padding:18px;position:relative}
+  .hoy h3{margin:0;font-size:20px} .hoy p{margin:4px 0 14px;color:#cfc9bb;font-size:14px;max-width:80%}
+  .hoy .meta{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap}
+  .hoy .meta span{background:#ffffff14;padding:6px 10px;font-size:13px}
+  .hoy .go{display:block;width:100%;background:var(--seal);color:#fff;font-weight:800;letter-spacing:.12em;padding:14px}
+  .hoy .go:disabled{background:#ffffff22;color:#cfc9bb}
+  .hoy .sellohoy{position:absolute;right:16px;top:16px;width:46px;height:46px;border-radius:6px;background:var(--seal);color:#f6e9e4;font-family:var(--kai);
+    font-size:27px;display:flex;align-items:center;justify-content:center;transform:rotate(-6deg);box-shadow:inset 0 0 0 3px var(--seal),inset 0 0 0 5px #f6e9e4}
+  .caja{background:var(--sheet);border:1.5px solid var(--ink);padding:14px;margin-top:14px}
+  .caja h4{margin:0 0 8px;font-size:15px}
+  .debiles{display:flex;flex-wrap:wrap;gap:8px}
+  .debiles span{font-family:var(--kai);font-size:24px;border:1.5px solid var(--line);padding:2px 10px;background:var(--paper)}
+  .numeros{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;text-align:center}
+  .numeros b{display:block;font-size:24px} .numeros div{font-size:12px;color:var(--muted)}
+  /* Libro */
+  .voc-btn{margin-top:12px;font-size:13px;color:var(--ink2);text-decoration:underline}
+  table.voc{width:100%;border-collapse:collapse;font-size:14px;margin-top:8px}
+  table.voc td{border-bottom:1px solid var(--line);padding:7px 4px;vertical-align:middle}
+  table.voc .h{font-family:var(--kai);font-size:22px;white-space:nowrap} table.voc .p{color:var(--seal)}
+  table.voc .m{color:var(--jade);font-weight:700;text-align:right;white-space:nowrap;letter-spacing:-1px}
+  /* tonos en el celular */
+  .tecla-tonos{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-top:10px}
+  .tecla-tonos button{font-size:24px;padding:9px 0 7px;background:var(--sheet);border:1.5px solid var(--ink);box-shadow:2px 2px 0 var(--ink);line-height:1}
+  .tecla-tonos button small{display:block;font-size:11px;color:var(--muted);margin-top:3px}
+  .tecla-tonos button:active{transform:translate(2px,2px);box-shadow:none}
+  .oir{display:inline-flex;align-items:center;gap:6px;font-size:13px;color:var(--ink2);border:1.5px solid var(--line);padding:5px 12px;margin-top:6px;background:var(--sheet)}
+  /* diálogos */
+  .chat{display:flex;flex-direction:column;gap:10px;margin:6px 0 14px}
+  .burb{max-width:84%;padding:9px 12px;border:1.5px solid var(--ink);background:var(--sheet)}
+  .burb .h{font-family:var(--kai);font-size:22px;line-height:1.3} .burb .p{font-size:12px;color:var(--muted)} .burb .e{font-size:13px;color:var(--ink2)}
+  .burb.b{align-self:flex-end;background:#fff} .burb.hueco{border-style:dashed;background:transparent;color:var(--muted);min-width:90px}
+  .quien{font-size:11px;font-weight:700;color:var(--seal);letter-spacing:.08em;margin-bottom:2px}
+  .op.frase{font-family:var(--kai);font-size:22px;text-align:left;grid-column:1/-1}
+  /* Planas */
+  .grupo h4{margin:20px 0 8px;font-size:15px} .grupo h4 small{color:var(--muted);font-weight:400}
+  .rejilla{display:grid;grid-template-columns:repeat(auto-fill,minmax(54px,1fr));gap:6px}
+  .rejilla button{aspect-ratio:1;font-family:var(--kai);font-size:30px;background:var(--sheet);border:1.5px solid var(--line);position:relative}
+  .rejilla button.hecha{border-color:var(--seal);color:var(--seal)}
+  .rejilla button.hecha::after{content:"完";position:absolute;right:-4px;top:-6px;font-size:12px;background:var(--seal);color:#fff;padding:1px 3px;transform:rotate(-8deg)}
+  #plana{display:none;min-height:100vh;padding-bottom:30px}
+  .pasos{display:flex;flex-wrap:wrap;gap:4px;justify-content:center;margin:10px 0 4px}
+  .pasos svg{width:46px;height:46px;border:1px solid #b5312b66;background:
+      linear-gradient(to right,transparent 49%,#b5312b22 49%,#b5312b22 51%,transparent 51%),
+      linear-gradient(to bottom,transparent 49%,#b5312b22 49%,#b5312b22 51%,transparent 51%),var(--sheet)}
+  #lienzo{width:280px;height:280px;margin:12px auto 6px;border:2px solid var(--seal);background:
+      linear-gradient(to right,transparent 49.7%,#b5312b40 49.7%,#b5312b40 50.3%,transparent 50.3%),
+      linear-gradient(to bottom,transparent 49.7%,#b5312b40 49.7%,#b5312b40 50.3%,transparent 50.3%),
+      linear-gradient(45deg,transparent 49.8%,#b5312b26 49.8%,#b5312b26 50.2%,transparent 50.2%),
+      linear-gradient(-45deg,transparent 49.8%,#b5312b26 49.8%,#b5312b26 50.2%,transparent 50.2%),var(--sheet);touch-action:none}
+  .modos{display:flex;gap:8px;margin:8px 0}
+  .modos button{flex:1;padding:11px 4px;border:1.5px solid var(--ink);background:var(--sheet);font-size:14px;font-weight:600}
+  .modos button.on{background:var(--ink);color:var(--sheet)}
+  #plana-msg{text-align:center;min-height:24px;font-weight:700;margin-top:6px}
+  /* Árbol */
+  .filtro{display:flex;gap:8px;margin:14px 0 4px}
+  .filtro button{padding:6px 14px;border:1.5px solid var(--ink);font-size:13px} .filtro button.on{background:var(--ink);color:var(--sheet)}
+  .leyenda{font-size:12px;color:var(--muted);display:flex;gap:14px;margin:6px 0 0;flex-wrap:wrap}
+  .leyenda i{display:inline-block;width:12px;height:12px;border-radius:50%;vertical-align:-1px;margin-right:4px;border:1.5px solid var(--ink)}
+  #arbol-svg{display:block;width:100%;margin-top:6px}
+  #arbol-svg .nd{cursor:pointer}
+  #ficha{position:fixed;left:0;right:0;bottom:0;background:var(--sheet);border-top:2px solid var(--ink);padding:16px 18px calc(16px + env(safe-area-inset-bottom));z-index:9;display:none}
+  #ficha .cerrar{position:absolute;right:14px;top:10px;font-size:22px;color:var(--ink2)}
+  #ficha .h{font-family:var(--kai);font-size:46px;line-height:1.1} #ficha .p{color:var(--seal);font-size:18px}
+  #ficha .acciones{display:flex;gap:8px;margin-top:10px} #ficha .acciones button{flex:1;padding:10px;border:1.5px solid var(--ink);font-size:14px}
+  /* errores visibles (para depurar en el celular) */
+  #error{display:none;position:fixed;top:0;left:0;right:0;background:#7a1f1a;color:#fff;font:13px/1.4 monospace;padding:10px 12px;z-index:99;white-space:pre-wrap}
 </style>
 </head>
 <body>
+<div id="error"></div>
+<script>
+// Muestra cualquier error en pantalla (sirve para depurar en el celular).
+function muestraError(m){ var e=document.getElementById('error'); e.style.display='block'; e.textContent+=(e.textContent?'\n':'')+'⚠ '+m+'  (toca para cerrar)'; e.onclick=function(){e.style.display='none';e.textContent='';}; }
+window.addEventListener('error',function(ev){ muestraError(ev.message+(ev.lineno?' · línea '+ev.lineno:'')); });
+window.addEventListener('unhandledrejection',function(ev){ muestraError(String(ev.reason)); });
+</script>
 
 <section id="camino">
   <header>
     <h1>汉字</h1>
     <div class="chips"><span>Racha <b id="racha">0</b></span><span>XP <b id="xp">0</b></span></div>
   </header>
-  <div class="wrap" id="unidades"></div>
-  <div class="pie wrap">
-    <button id="exportar">Exportar progreso (JSON)</button>·<button id="borrar">Borrar progreso</button>
+  <div class="vista wrap" id="v-hoy"></div>
+  <div class="vista" id="v-libro">
+    <div class="wrap" id="unidades"></div>
+    <div class="pie wrap">
+      <button id="exportar">Exportar progreso (JSON)</button>·<button id="borrar">Borrar progreso</button>
+    </div>
   </div>
+  <div class="vista wrap" id="v-planas"></div>
+  <div class="vista wrap" id="v-arbol"></div>
+  <nav id="tabs">
+    <button data-v="hoy"><b>今</b>Hoy</button><button data-v="libro"><b>课</b>Libro</button>
+    <button data-v="planas"><b>写</b>Planas</button><button data-v="arbol"><b>树</b>Árbol</button>
+  </nav>
+  <div id="ficha"></div>
+</section>
+
+<section id="plana">
+  <div class="top wrap" style="width:100%"><button class="x" id="plana-salir">✕</button><div style="flex:1;font-weight:700" id="plana-titulo"></div></div>
+  <div class="wrap" id="plana-cuerpo"></div>
 </section>
 
 <section id="leccion">
@@ -131,6 +237,7 @@
   </div></div>
 </section>
 
+<script src="hanzi-writer.min.js"></script>
 <script>
 // ================== DATOS (basados en la guía de radicales de "Chino Contemporáneo") ==================
 const RADS = {'亻':'persona','女':'mujer','子':'niño','日':'sol, tiempo','人':'persona','口':'boca','讠':'palabras, hablar',
@@ -144,6 +251,9 @@ const RADS = {'亻':'persona','女':'mujer','子':'niño','日':'sol, tiempo','�
   '车':'vehículo','马':'caballo'};
 const C = {};
 function h(hz,py,pn,es,rad,son){ C[hz]={h:hz,py,pn,es,rad,son}; return hz; }
+// Palabras del libro: pn = sílabas con número de tono separadas por espacio ('tong2 xue2'); es único entre palabras.
+const P = {};
+function w(pal,py,pn,es,cat,nota){ P[pal]={p:pal,py,pn,es,cat,nota}; return pal; }
 
 const UNIDADES = [
  { t:'1 · Personas', d:'gente y familia', rads:'亻女子',
@@ -260,34 +370,201 @@ const UNIDADES = [
    pares:[ {h:'病',a:'疒',b:'广',por:'疒 lleva dos puntitos a la izquierda: enfermedad.'},
            {h:'店',a:'广',b:'疒',por:'广 sin puntitos: edificio, refugio.'},
            {h:'现',a:'王 jade',b:'王 rey',por:'A la izquierda, 王 es jade (玉 sin el punto).'} ] },
+
+ // ---------- Vocabulario del libro (unidades de palabras; ver vocab/lecciones.csv) ----------
+ // Unidad con `libro:true` usa `pal` (palabras de P) en lugar de `hz`. Siempre agregar al FINAL.
+ { libro:true, num:'第一课', t:'Lección 1A · Saludos y personas', d:'pronombres, apellido, ser y no ser', muestra:'您好 贵姓',
+   pal:[w('您','nín','nin2','usted (formal)','Pron.'), w('好','hǎo','hao3','bien, bueno','Adj.'),
+        w('贵姓','guìxìng','gui4 xing4','¿cuál es su apellido? (formal)','—','Se usa para preguntar el apellido con respeto: 您贵姓?'),
+        w('姓','xìng','xing4','apellido; apellidarse','V. y Sust.','Parte de 贵姓. Al contestar se usa 姓, nunca 贵姓: 我姓王.'),
+        w('我','wǒ','wo3','yo','Pron.'), w('你','nǐ','ni3','tú','Pron.'), w('他','tā','ta1','él','Pron.'), w('她','tā','ta1','ella','Pron.'),
+        w('们','men','men5','(sufijo de plural)','sufijo','我们 nosotros · 你们 ustedes · 他们 ellos.'),
+        w('呢','ne','ne5','¿y…? (devuelve la pregunta)','Part.','你呢? = ¿y tú?'),
+        w('吗','ma','ma5','(partícula de pregunta sí/no)','Part.','Va al final: 你是老师吗?'),
+        w('是','shì','shi4','ser','V.'), w('人','rén','ren2','persona, pueblo','Sust.'),
+        w('不','bù','bu4','no','Adv.','Antes de otro 4.º tono cambia a bú: 不是 bú shì.')],
+   frases:[['您贵姓','¿Cuál es su apellido?',['您','贵姓'],['你','吗']],
+           ['我不姓王','Mi apellido no es Wang',['我','不','姓','王'],['是','呢']],
+           ['你呢','¿Y tú?',['你','呢'],['吗','好']],
+           ['我不是她','Yo no soy ella',['我','不','是','她'],['吗','们']]] },
+ { libro:true, num:'第一课', t:'Lección 1B · En clase', d:'compañeros, nombre y preguntas', muestra:'同学 老师',
+   pal:[w('同学','tóngxué','tong2 xue2','compañero de clase','Sust.'), w('老师','lǎoshī','lao3 shi1','profesor','Sust.'),
+        w('叫','jiào','jiao4','llamarse','V.'), w('什么','shénme','shen2 me5','qué','P.I.','么 va en tono neutro.'),
+        w('名字','míngzi','ming2 zi5','nombre','Sust.','字 va en tono neutro.'),
+        w('哪','nǎ','na3','¿cuál?','P.I.'), w('国','guó','guo2','país','Sust.'),
+        w('哪国人','nǎ guó rén','na3 guo2 ren2','¿de qué país? (nacionalidad)','—','哪 + 国 + 人.'),
+        w('也','yě','ye3','también','Adv.'), w('都','dōu','dou1','ambos, todos','Adv.'),
+        w('只','zhǐ','zhi3','solo, solamente','Adv.'),
+        w('还是','háishi','hai2 shi5','o (en preguntas)','Conj.','是 suele ir en tono neutro.')],
+   frases:[['你叫什么名字','¿Cómo te llamas?',['你','叫','什么','名字'],['哪','是']],
+           ['你是哪国人','¿De qué país eres?',['你','是','哪国人'],['什么','也']],
+           ['他是老师吗','¿Él es profesor?',['他','是','老师','吗'],['呢','只']],
+           ['我们都是同学','Todos nosotros somos compañeros',['我们','都','是','同学'],['哪','什么']]] },
+ { libro:true, num:'第一课', t:'Lección 1C · Idiomas y países', d:'hablar idiomas y decir de dónde eres', muestra:'汉语 中国',
+   pal:[w('说','shuō','shuo1','hablar, decir','V.'), w('英语','Yīngyǔ','ying1 yu3','inglés (idioma)','Sust.'),
+        w('西班牙语','Xībānyáyǔ','xi1 ban1 ya2 yu3','español (idioma)','Sust.','西班牙 = España; + 语 = su idioma.'),
+        w('汉语','Hànyǔ','han4 yu3','chino (idioma)','Sust.'), w('墨西哥','Mòxīgē','mo4 xi1 ge1','México','N. propio','墨西哥人 = mexicano.'),
+        w('中国','Zhōngguó','zhong1 guo2','China','N. propio','中国人 = chino (persona).'),
+        w('秘鲁','Bìlǔ','bi4 lu3','Perú','N. propio'), w('阿根廷','Āgēntíng','a1 gen1 ting2','Argentina','N. propio'),
+        w('玻利维亚','Bōlìwéiyà','bo1 li4 wei2 ya4','Bolivia','N. propio','玻利维亚人 = boliviano.')],
+   frases:[['我不是中国人','No soy chino',['我','不','是','中国','人'],['都','哪']],
+           ['我是墨西哥人','Soy mexicano',['我','是','墨西哥','人'],['呢','什么']],
+           ['他不说汉语','Él no habla chino',['他','不','说','汉语'],['也','吗']],
+           ['我只说西班牙语','Solo hablo español',['我','只','说','西班牙语'],['也','都']],
+           ['你说英语还是西班牙语','¿Hablas inglés o español?',['你','说','英语','还是','西班牙语'],['吗','都']]],
+   // Diálogos de PRÁCTICA hechos con el vocabulario de la lección (no son los del libro).
+   // Línea: [quién, hanzi, pinyin, español, trampas?]. Si trae trampas, se puede preguntar.
+   dialogos:[
+    {t:'En clase (práctica)', lineas:[
+      ['王老师','你好！','Nǐ hǎo!','¡Hola!'],
+      ['安娜','老师好！','Lǎoshī hǎo!','¡Hola, profesor!',['同学们好！','你们好！']],
+      ['王老师','你叫什么名字？','Nǐ jiào shénme míngzi?','¿Cómo te llamas?'],
+      ['安娜','我叫安娜。','Wǒ jiào Ānnà.','Me llamo Ana.',['我是中国人。','我也是同学。']],
+      ['王老师','你是哪国人？','Nǐ shì nǎ guó rén?','¿De qué país eres?'],
+      ['安娜','我是墨西哥人。','Wǒ shì Mòxīgē rén.','Soy mexicana.',['我叫墨西哥。','我说西班牙语。']]]},
+    {t:'¿Cuál es su apellido? (práctica)', lineas:[
+      ['李','您贵姓？','Nín guìxìng?','¿Cuál es su apellido?'],
+      ['王','我姓王。您呢？','Wǒ xìng Wáng. Nín ne?','Me apellido Wang. ¿Y usted?',['我贵姓王。您呢？','我是王。您吗？']],
+      ['李','我姓李。您说英语吗？','Wǒ xìng Lǐ. Nín shuō Yīngyǔ ma?','Me apellido Li. ¿Habla inglés?',['我叫李。您是英语吗？','我贵姓李。您说英语呢？']],
+      ['王','我不说英语，我只说汉语。','Wǒ bù shuō Yīngyǔ, wǒ zhǐ shuō Hànyǔ.','No hablo inglés, solo hablo chino.',['我不是英语，我只是汉语。','我说英语吗，我只说汉语。']]]} ] },
 ];
+// Radical de los hanzi que solo aparecen en palabras del libro (para el Árbol).
+const RADX = {'姓':'女','呢':'口','同':'冂','学':'子','老':'耂','师':'巾','什':'亻','么':'丿','名':'口','字':'子','哪':'口',
+  '也':'乙','英':'艹','还':'辶','西':'西','班':'王','牙':'牙','只':'口','墨':'土','哥':'口','秘':'禾','鲁':'鱼','阿':'阝',
+  '根':'木','廷':'廴','玻':'王','利':'刂','维':'纟','亚':'一','王':'王'};
+Object.assign(RADS, {'冂':'marco','耂':'viejo','巾':'tela, pañuelo','丿':'trazo inclinado','乙':'gancho','西':'oeste',
+  '牙':'diente','禾':'cereal','鱼':'pez','廴':'avanzar a pasos largos'});
+const radDe = ch => (C[ch] && C[ch].rad) || RADX[ch];
+// Números (página de trazos del libro).
+const NUMEROS = {'一':['yī','uno'],'二':['èr','dos'],'三':['sān','tres'],'四':['sì','cuatro'],'五':['wǔ','cinco'],
+  '六':['liù','seis'],'七':['qī','siete'],'八':['bā','ocho'],'九':['jiǔ','nueve'],'十':['shí','diez']};
 const LECCIONES_POR_UNIDAD = 3;
 const NOMBRES=['Parte 1','Parte 2','Repaso de la unidad'];
 
 // ================== ESTADO ==================
 const KEY='hanzi-camino-v1';
-const VACIO=()=>({hechas:{}, xp:0, racha:0, ultimoDia:null, aciertos:{}, fallos:{}});
-let S = (()=>{ try{ return JSON.parse(localStorage.getItem(KEY)) || VACIO() }catch(e){ return VACIO() } })();
+// srs: repetición espaciada. Clave 'p:<palabra>' o 'h:<hanzi>' → {iv: días, due: 'AAAA-MM-DD', n: aciertos, f: fallos}
+// planas: hanzi → veces escrito de memoria.
+const VACIO=()=>({hechas:{}, xp:0, racha:0, ultimoDia:null, aciertos:{}, fallos:{}, srs:{}, planas:{}});
+let S = (()=>{ try{ return Object.assign(VACIO(), JSON.parse(localStorage.getItem(KEY))||{}) }catch(e){ return VACIO() } })();
 const guardar=()=>{ try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){} };
 const fecha=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
 const hoy=()=>fecha(new Date()), ayer=()=>fecha(new Date(Date.now()-864e5));
 const idL=(u,l)=>u+'-'+l;
-function desbloqueada(u,l){ if(u===0&&l===0) return true; return l>0 ? !!S.hechas[idL(u,l-1)] : !!S.hechas[idL(u-1,LECCIONES_POR_UNIDAD-1)]; }
+// El libro es otro camino: su primera unidad está abierta desde el inicio.
+const inicioDeCamino=u=>u===0 || (UNIDADES[u].libro && !UNIDADES[u-1].libro);
+function desbloqueada(u,l){ if(l===0 && inicioDeCamino(u)) return true; return l>0 ? !!S.hechas[idL(u,l-1)] : !!S.hechas[idL(u-1,LECCIONES_POR_UNIDAD-1)]; }
 
-// ================== CAMINO ==================
-function pintaCamino(){
+const masDias=n=>fecha(new Date(Date.now()+n*864e5));
+// ---------- repetición espaciada ----------
+// Cada clave cambia su intervalo una sola vez por sesión: el primer acierto lo alarga, cualquier fallo lo reinicia.
+function srsResponde(clave, ok){
+  if(!clave) return;
+  const r = S.srs[clave] || (S.srs[clave]={iv:0,due:hoy(),n:0,f:0});
+  if(!ok){ r.iv=0; r.due=hoy(); r.f++; L.srsTocado.add(clave); return; }
+  r.n++;
+  if(L.srsTocado.has(clave)){ if(r.iv===0) r.due=masDias(1); return; }
+  L.srsTocado.add(clave);
+  r.iv = r.iv<1 ? 1 : Math.min(180, Math.round(r.iv*2.3));
+  r.due = masDias(r.iv);
+}
+const claveSRS=e=> e.w ? 'p:'+e.w : e.hz ? 'h:'+e.hz : (e.tipo==='par' ? 'h:'+e.p.h : null);
+const nivel=clave=>{ const r=S.srs[clave]; return !r ? 0 : r.iv>=21 ? 3 : r.iv>=4 ? 2 : 1; };
+const vencidas=()=>Object.entries(S.srs).filter(([k,r])=>r.due<=hoy() && (k.startsWith('p:')?P[k.slice(2)]:C[k.slice(2)]))
+                                        .sort((a,b)=>a[1].due<b[1].due?-1:1).map(([k])=>k);
+const palabrasLibro=()=>UNIDADES.filter(u=>u.libro).flatMap(u=>u.pal);
+
+// ================== APARTADOS ==================
+let vista='hoy';
+document.querySelectorAll('#tabs button').forEach(b=>b.onclick=()=>{ vista=b.dataset.v; cierraFicha(); pinta(); window.scrollTo(0,0); });
+function pinta(){
   const racha = (S.ultimoDia===hoy()||S.ultimoDia===ayer()) ? S.racha : 0;
-  document.getElementById('racha').textContent=racha; document.getElementById('xp').textContent=S.xp;
-  document.getElementById('unidades').innerHTML = UNIDADES.map((u,ui)=>{
+  $('racha').textContent=racha; $('xp').textContent=S.xp;
+  document.querySelectorAll('#tabs button').forEach(b=>b.classList.toggle('on',b.dataset.v===vista));
+  document.querySelectorAll('.vista').forEach(v=>v.classList.toggle('on',v.id==='v-'+vista));
+  ({hoy:pintaHoy, libro:pintaCamino, planas:pintaPlanas, arbol:pintaArbol})[vista]();
+}
+
+// ================== 今 HOY ==================
+function armaHoy(){
+  const due=vencidas().slice(0,15);
+  const nuevas=palabrasLibro().filter(w=>!S.srs['p:'+w]).slice(0, due.length>=12?3:5);
+  const poolP=Object.keys(P), poolH=Object.keys(C);
+  const repaso=due.map(k=>{
+    const x=k.slice(2), r=S.srs[k];
+    if(k.startsWith('p:')){
+      const t=palConTono(x) ? (r.iv>=3 ? ['pal-elige','pal-escribe','pal-tono','pal-escribe'] : ['pal-sig','pal-elige','pal-tono']) : ['pal-sig','pal-elige'];
+      return {tipo:t[Math.floor(Math.random()*t.length)], w:x, pool:poolP};
+    }
+    const t=conTono(x) ? (r.iv>=3 ? ['hanzi','escribe','tono'] : ['significado','hanzi','tono']) : ['significado','hanzi'];
+    return {tipo:t[Math.floor(Math.random()*t.length)], hz:x, pool:poolH};
+  });
+  const intro=nuevas.flatMap(w=>[{tipo:'pal-intro',w},{tipo:'pal-sig',w,pool:poolP}]);
+  return {cola:[...intro, ...mezcla([...repaso, ...nuevas.map(w=>({tipo:'pal-elige',w,pool:poolP}))])], due:due.length, nuevas:nuevas.length};
+}
+function pintaHoy(){
+  const {cola,due,nuevas}=armaHoy(), todas=Object.keys(S.srs);
+  const pal=todas.filter(k=>k.startsWith('p:')).length, hz=todas.filter(k=>k.startsWith('h:')).length;
+  const dominadas=todas.filter(k=>nivel(k)===3).length, manana=Object.values(S.srs).filter(r=>r.due===masDias(1)).length;
+  const debiles=Object.entries(S.srs).filter(([k,r])=>r.f>0).sort((a,b)=>(b[1].f-b[1].n/3)-(a[1].f-a[1].n/3)).slice(0,8).map(([k])=>k.slice(2));
+  const min=Math.max(1,Math.round(cola.length*0.35));
+  $('v-hoy').innerHTML=`
+    <div class="hoy"><span class="sellohoy">今</span>
+      <h3>Práctica de hoy</h3>
+      <p>${cola.length ? 'Te sale justo lo que estás por olvidar, más unas palabras nuevas del libro.' : 'Todo al día. Vuelve mañana o avanza en 课 Libro.'}</p>
+      <div class="meta"><span>${due} repasos</span><span>${nuevas} nuevas</span><span>~${min} min</span></div>
+      <button class="go" id="go-hoy" ${cola.length?'':'disabled'}>${cola.length?'EMPEZAR':'TODO AL DÍA ✓'}</button></div>
+    ${debiles.length?`<div class="caja"><h4>Te están costando</h4><div class="debiles">${debiles.map(x=>`<span>${x}</span>`).join('')}</div></div>`:''}
+    <div class="caja"><h4>Tu avance</h4><div class="numeros">
+      <div><b>${pal}</b>palabras</div><div><b>${hz}</b>hanzi</div><div><b>${dominadas}</b>dominadas</div></div>
+      <p class="nota" style="margin-top:10px">${manana?`Mañana te tocan ${manana} repasos.`:'Lo que aprendes en Libro entra aquí solo, para repasarlo a tiempo.'}</p></div>`;
+  if(cola.length) $('go-hoy').onclick=()=>{ const s=armaHoy(); empezarCola(s.cola,{modo:'hoy',titulo:'Práctica de hoy'}); };
+}
+
+// ================== 课 LIBRO ==================
+function pintaCamino(){
+  const tarjeta=(u,ui)=>{
     const nodos=[0,1,2].map(l=>{
       const hecha=!!S.hechas[idL(ui,l)], ok=desbloqueada(ui,l);
       return `<button class="nodo ${hecha?'done':(ok?'now':'')}" data-u="${ui}" data-l="${l}" ${ok?'':'disabled'}>
               <span class="cuadro">${hecha?'完':['一','二','复'][l]}</span>${['Parte 1','Parte 2','Repaso'][l]}</button>`;
     }).join('');
-    return `<div class="unidad ${desbloqueada(ui,0)?'':'locked'}"><div class="num">第${'一二三四五六七八九'[ui]}课</div><h2>${u.t.replace(/^\d+ · /,'')}</h2><p>${u.d}</p><div class="rads">${u.rads}</div>
-            <div class="lecciones">${nodos}</div></div>`;
-  }).join('');
+    const num = u.libro ? u.num : `第${'一二三四五六七八九'[ui]}课`;
+    return `<div class="unidad ${desbloqueada(ui,0)?'':'locked'}"><div class="num">${num}</div><h2>${u.t.replace(/^\d+ · /,'')}</h2><p>${u.d}</p><div class="rads">${u.libro?u.muestra:u.rads}</div>
+            <div class="lecciones">${nodos}</div>
+            ${u.libro?`<button class="voc-btn" data-voc="${ui}">Ver vocabulario${u.dialogos?' y diálogos':''}</button><div id="voc-${ui}"></div>`:''}</div>`;
+  };
+  const de=libro=>UNIDADES.map((u,ui)=>!!u.libro===libro?tarjeta(u,ui):'').join('');
+  $('unidades').innerHTML =
+    `<div class="seccion">课本 <small>Vocabulario del libro</small></div>${de(true)}
+     <div class="seccion">部首 <small>Radicales</small></div>${de(false)}`;
   document.querySelectorAll('.nodo:not([disabled])').forEach(b=>b.onclick=()=>empezar(+b.dataset.u,+b.dataset.l));
+  document.querySelectorAll('.voc-btn').forEach(b=>b.onclick=()=>{
+    const ui=+b.dataset.voc, box=$('voc-'+ui);
+    if(box.innerHTML){ box.innerHTML=''; b.textContent=b.textContent.replace('Ocultar','Ver'); return; }
+    b.textContent=b.textContent.replace('Ver','Ocultar'); box.innerHTML=vocabularioHTML(UNIDADES[ui]);
+    box.querySelectorAll('[data-oir]').forEach(x=>x.onclick=()=>habla(x.dataset.oir));
+  });
+}
+function vocabularioHTML(u){
+  const marcas=['','✓','✓✓','✓✓✓'];
+  const tabla=`<table class="voc">${u.pal.map(w=>{ const p=P[w];
+    return `<tr><td class="h">${w}</td><td class="p">${p.py}</td><td>${p.es}</td><td class="m">${marcas[nivel('p:'+w)]}</td>
+            <td><button data-oir="${w}" aria-label="escuchar">🔊</button></td></tr>`; }).join('')}</table>
+    <p class="nota">✓ visto · ✓✓ lo recuerdas · ✓✓✓ dominado</p>`;
+  const dlg=(u.dialogos||[]).map(d=>`<h4 style="margin:16px 0 6px">${d.t}</h4><div class="chat">${d.lineas.map((x,i)=>
+    `<div class="burb ${i%2?'b':''}"><div class="quien">${x[0]}</div><div class="h">${x[1]}</div><div class="p">${x[2]}</div><div class="e">${x[3]}</div>
+     <button class="oir" data-oir="${x[1]}">🔊 escuchar</button></div>`).join('')}</div>`).join('');
+  return tabla+dlg;
+}
+
+// ---------- voz (la del teléfono, sin internet) ----------
+function habla(t){
+  try{ if(!('speechSynthesis' in window)) return; speechSynthesis.cancel();
+    const u=new SpeechSynthesisUtterance(t); u.lang='zh-CN'; u.rate=.8;
+    const v=speechSynthesis.getVoices().find(v=>/^zh[-_]CN/i.test(v.lang)) || speechSynthesis.getVoices().find(v=>/^zh/i.test(v.lang));
+    if(v) u.voice=v; speechSynthesis.speak(u);
+  }catch(e){}
 }
 
 // ================== GENERADOR DE LECCIONES ==================
@@ -296,7 +573,31 @@ const toma=(a,n)=>mezcla(a).slice(0,n);
 const aprendidosHasta=ui=>UNIDADES.slice(0,ui+1).flatMap(u=>u.hz);
 const conTono=hz=>C[hz].pn.slice(-1)!=='5';
 
+const palabrasHasta=ui=>UNIDADES.slice(0,ui+1).flatMap(u=>u.pal||[]);
+const silabas=pal=>P[pal].pn.split(' ');
+const palConTono=pal=>silabas(pal).some(s=>s.slice(-1)!=='5');
+
+function armaLeccionLibro(ui,l){
+  const u=UNIDADES[ui], mitad=Math.ceil(u.pal.length/2), pool=palabrasHasta(ui);
+  if(l<2){
+    const nuevos = l===0 ? u.pal.slice(0,mitad) : u.pal.slice(mitad);
+    const primero = nuevos.flatMap(w=>[{tipo:'pal-intro',w},{tipo:'pal-sig',w,pool}]);
+    const resto = mezcla([ ...nuevos.map(w=>({tipo:'pal-elige',w,pool})),
+                           ...(l===1 ? toma(nuevos.filter(palConTono),3).map(w=>({tipo:'pal-tono',w})) : []) ]);
+    return [...primero, ...resto];
+  }
+  return mezcla([ ...toma(u.pal,3).map(w=>({tipo:'pal-elige',w,pool})),
+                  ...toma(u.pal,2).map(w=>({tipo:'pal-sig',w,pool})),
+                  ...toma(u.pal.filter(palConTono),2).map(w=>({tipo:'pal-tono',w})),
+                  ...toma(u.pal.filter(palConTono),3).map(w=>({tipo:'pal-escribe',w})),
+                  ...toma(u.frases,2).map(f=>({tipo:'frase',f})),
+                  ...toma(lineasDialogo(u),2) ]);
+}
+// Ejercicio "¿qué contesta?": una línea con trampas de un diálogo de la unidad.
+const lineasDialogo=u=>(u.dialogos||[]).flatMap((d,di)=>d.lineas.map((x,i)=>x[4]?{tipo:'dialogo',d,i}:null).filter(Boolean));
+
 function armaLeccion(ui,l){
+  if(UNIDADES[ui].libro) return armaLeccionLibro(ui,l);
   const u=UNIDADES[ui], mitad=Math.ceil(u.hz.length/2), pool=aprendidosHasta(ui);
   if(l<2){
     const nuevos = l===0 ? u.hz.slice(0,mitad) : u.hz.slice(mitad);
@@ -315,14 +616,14 @@ function armaLeccion(ui,l){
 // ================== MOTOR DE LECCIÓN ==================
 let L=null;
 const $=id=>document.getElementById(id);
-function empezar(ui,l){
-  const cola=armaLeccion(ui,l);
-  L={ui,l,cola,total:cola.length,hechos:0,errados:new Set(),xpGanado:0,actual:null,estado:'pregunta'};
-  $('camino').style.display='none'; $('leccion').style.display='flex'; window.scrollTo(0,0);
+function empezar(ui,l){ empezarCola(armaLeccion(ui,l),{modo:'leccion',ui,l,titulo:UNIDADES[ui].t+' · '+NOMBRES[l]}); }
+function empezarCola(cola,extra){
+  L=Object.assign({cola,total:cola.length,hechos:0,errados:new Set(),srsTocado:new Set(),xpGanado:0,actual:null,estado:'pregunta'},extra);
+  cierraFicha(); $('camino').style.display='none'; $('leccion').style.display='flex'; window.scrollTo(0,0);
   siguiente();
 }
 $('salir').onclick=()=>{ if(L.estado==='fin' || confirm('¿Salir? Se pierde el avance de esta lección.')) volver(); };
-function volver(){ L=null; $('leccion').style.display='none'; $('camino').style.display='block'; pintaCamino(); window.scrollTo(0,0); }
+function volver(){ L=null; $('leccion').style.display='none'; $('camino').style.display='block'; pinta(); window.scrollTo(0,0); }
 function avance(){ $('avance').style.width = Math.round(100*L.hechos/L.total)+'%'; }
 function setAbajo(clase,txt,html){ $('abajo').className='abajo '+(clase||''); $('fb').innerHTML=html||''; $('accion').textContent=txt; }
 
@@ -330,9 +631,11 @@ function siguiente(){
   avance();
   if(!L.cola.length) return fin();
   L.actual=L.cola.shift(); L.sel=null; L.estado='pregunta';
-  const e=L.actual; setAbajo('', e.tipo==='intro'?'Continuar':'Comprobar');
-  $('accion').disabled = e.tipo!=='intro';
-  ({intro:pIntro, significado:pSignificado, hanzi:pHanzi, tono:pTono, escribe:pEscribe, par:pPar, frase:pFrase})[e.tipo](e);
+  const e=L.actual, esIntro = e.tipo==='intro' || e.tipo==='pal-intro';
+  setAbajo('', esIntro?'Continuar':'Comprobar');
+  $('accion').disabled = !esIntro;
+  ({intro:pIntro, significado:pSignificado, hanzi:pHanzi, tono:pTono, escribe:pEscribe, par:pPar, frase:pFrase,
+    'pal-intro':pPalIntro, 'pal-sig':pPalSig, 'pal-elige':pPalElige, 'pal-tono':pPalTono, 'pal-escribe':pPalEscribe, dialogo:pDialogo})[e.tipo](e);
   window.scrollTo(0,0);
 }
 const opcionesHTML=(ops,cjk)=>`<div class="opciones">${ops.map((o,i)=>`<button class="op ${cjk?'cjk':''}" data-i="${i}">${o}</button>`).join('')}</div>`;
@@ -349,7 +652,9 @@ function pIntro(e){
   $('ej').innerHTML=`<div class="intro"><div class="mizi"><span>${c.h}</span><i class="sello nuevo">新</i></div>
     <div class="py">${c.py}</div><div class="es">${c.es}</div>
     <div class="partes"><span class="r">${c.rad}</span>${c.son?`<span>${c.son.split(' ')[0]}</span>`:''}</div>
-    <p class="nota">Radical <b class="cjk">${c.rad}</b>: ${RADS[c.rad]||''}${c.son?` · suena parecido a <b class="cjk">${c.son}</b>`:''}</p></div>`;
+    <p class="nota">Radical <b class="cjk">${c.rad}</b>: ${RADS[c.rad]||''}${c.son?` · suena parecido a <b class="cjk">${c.son}</b>`:''}</p>
+    <button class="oir" id="oir">🔊 escuchar</button></div>`;
+  $('oir').onclick=()=>habla(c.h); habla(c.h);
 }
 function pSignificado(e){
   const c=C[e.hz];
@@ -373,12 +678,9 @@ function pTono(e){
 }
 function pEscribe(e){
   const c=C[e.hz];
-  $('ej').innerHTML=`<h3>Escribe el pinyin con su tono</h3><div class="mizi"><span>${c.h}</span></div>
-    <input class="py" id="pyin" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="ej. hao3 o hǎo">
-    <p class="ayuda">Número del tono al final: 1 ā · 2 á · 3 ǎ · 4 à</p>`;
-  const inp=$('pyin'); inp.focus();
-  inp.oninput=()=>{ $('accion').disabled=!inp.value.trim(); };
-  inp.onkeydown=ev=>{ if(ev.key==='Enter' && !$('accion').disabled) $('accion').click(); };
+  $('ej').innerHTML=`<h3>Escribe el pinyin con su tono</h3>${miziPal(c.h,'',130)}
+    ${campoPinyin('ej. hao y luego ǎ')}`;
+  activaPinyin();
 }
 function pPar(e){
   const c=C[e.p.h];
@@ -398,6 +700,109 @@ function pFrase(e){
     $('accion').disabled = e.orden.length===0;
   };
   pinta();
+}
+
+// ---------- ejercicios de palabras (vocabulario del libro) ----------
+function miziPal(pal,extra,max){
+  const ch=[...pal], s=Math.min(max||999,[200,140,104,80][Math.min(ch.length,4)-1]);
+  return `<div class="palabra" style="--s:${s}px">${ch.map(c=>`<div class="mizi"><span>${c}</span></div>`).join('')}${extra||''}</div>`;
+}
+const pyDe=pal=>silabas(pal).map(s=>s.slice(-1)==='5'? s.slice(0,-1) : conMarca(s.slice(0,-1),+s.slice(-1))).join('');
+function opcionesPal(ops){
+  const n=Math.max(...ops.map(o=>[...o].length)), fs=[42,36,28,23][Math.min(n,4)-1];
+  return `<div class="opciones">${ops.map((o,i)=>`<button class="op cjk ${n>1?'pal':''}" style="font-size:${fs}px" data-i="${i}">${o}</button>`).join('')}</div>`;
+}
+function pPalIntro(e){
+  const p=P[e.w], conocidos=[...new Set(p.p)].filter(c=>C[c] && p.p.length>1);
+  $('ej').innerHTML=`<div class="intro">${miziPal(p.p,'<i class="sello nuevo">新</i>')}
+    <div class="py">${p.py}</div><div class="es">${p.es}</div>
+    ${p.cat && p.cat!=='—' ? `<p class="sub">${p.cat}</p>` : ''}
+    ${p.nota ? `<p class="nota">${p.nota}</p>` : ''}
+    ${conocidos.length ? `<p class="nota">Ya lo viste en radicales: ${conocidos.map(c=>`<b class="cjk">${c}</b> ${C[c].py} · ${C[c].es}`).join(' — ')}</p>` : ''}
+    <button class="oir" id="oir">🔊 escuchar</button></div>`;
+  $('oir').onclick=()=>habla(p.p); habla(p.p);
+}
+function pPalSig(e){
+  const p=P[e.w];
+  const malas=toma([...new Set(e.pool.filter(x=>x!==e.w).map(x=>P[x].es))].filter(s=>s!==p.es),3);
+  e.ops=mezcla([p.es,...malas]); e.correcta=e.ops.indexOf(p.es);
+  $('ej').innerHTML=`<h3>¿Qué significa?</h3>${miziPal(p.p)}${opcionesHTML(e.ops,false)}`; activaOpciones();
+}
+function pPalElige(e){
+  const p=P[e.w], comparte=x=>[...x].some(c=>p.p.includes(c));
+  const otras=e.pool.filter(x=>x!==e.w && P[x].es!==p.es);
+  const parecidas=otras.filter(comparte), resto=otras.filter(x=>!comparte(x));
+  const malas=[...toma(parecidas,2), ...toma(resto,3)].slice(0,3);   // trampas que comparten caracteres
+  e.ops=mezcla([p.p,...malas]); e.correcta=e.ops.indexOf(p.p);
+  $('ej').innerHTML=`<h3>Elige la palabra: <span style="color:var(--seal)">“${p.es}”</span></h3>${opcionesPal(e.ops)}`; activaOpciones();
+}
+function pPalTono(e){
+  const p=P[e.w], sil=silabas(e.w), bien=pyDe(e.w), ops=new Set([bien]);
+  const con=sil.map((s,i)=>i).filter(i=>sil[i].slice(-1)!=='5');
+  for(let k=0; ops.size<4 && k<200; k++){
+    const s=[...sil], i=con[Math.floor(Math.random()*con.length)], t=1+Math.floor(Math.random()*4);
+    s[i]=s[i].slice(0,-1)+t;
+    if(k>40 && con.length>1){ const j=con[Math.floor(Math.random()*con.length)]; s[j]=s[j].slice(0,-1)+(1+Math.floor(Math.random()*4)); }
+    ops.add(s.map(x=>x.slice(-1)==='5'? x.slice(0,-1) : conMarca(x.slice(0,-1),+x.slice(-1))).join(''));
+  }
+  e.ops=mezcla([...ops]); e.correcta=e.ops.indexOf(bien);
+  $('ej').innerHTML=`<h3>¿Cómo se pronuncia?</h3>${miziPal(p.p)}<p class="sub">${p.es}</p><div style="height:14px"></div>
+    <div class="pron">${opcionesHTML(e.ops,false)}</div>`; activaOpciones();
+}
+function pPalEscribe(e){
+  const p=P[e.w];
+  $('ej').innerHTML=`<h3>Escribe el pinyin con sus tonos</h3>${miziPal(p.p,'',110)}<p class="sub">${p.es}</p><div style="height:10px"></div>
+    ${campoPinyin(silabas(e.w).length>1?'tong → á → xue → á':'ej. hao y luego ǎ')}`;
+  activaPinyin();
+}
+// ---------- campo de pinyin con botones de tono (para el celular) ----------
+const campoPinyin=ph=>`<input class="py" id="pyin" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="${ph}">
+  <div class="tecla-tonos">${[1,2,3,4].map(t=>`<button data-t="${t}">${'āáǎà'[t-1]}<small>${t}</small></button>`).join('')}<button data-t="0">⌫<small>borrar</small></button></div>
+  <p class="ayuda">Escribe una sílaba y toca su tono. El neutro no lleva tono. También vale <b>hao3</b>.</p>`;
+const MARCADAS='āáǎàēéěèīíǐìōóǒòūúǔùǖǘǚǜ';
+function ponTono(v,t){
+  if(!t) return v.slice(0,-1);
+  const m=v.match(/[a-zü]+$/i);
+  if(m && /[aeiouüv]/i.test(m[0])) return v.slice(0,m.index)+conMarca(m[0].toLowerCase().replace(/ü/g,'v'),t);
+  // la última sílaba ya tiene tono: cambiarlo
+  for(let k=v.length-1;k>=0;k--){ const i=MARCADAS.indexOf(v[k]); if(i>=0){ const vocal='aeiouv'[Math.floor(i/4)];
+    return v.slice(0,k)+MARCAS[vocal][t-1].replace('v','ü')+v.slice(k+1); } if(!/[a-z]/i.test(v[k])) break; }
+  return v;
+}
+function activaPinyin(){
+  const inp=$('pyin'), listo=()=>{ $('accion').disabled=!inp.value.trim(); };
+  inp.oninput=listo;
+  inp.onkeydown=ev=>{ if(ev.key==='Enter' && !$('accion').disabled) $('accion').click(); };
+  document.querySelectorAll('.tecla-tonos button').forEach(b=>{
+    const aplica=()=>{ if(inp.disabled) return; inp.value=ponTono(inp.value,+b.dataset.t); listo(); };
+    let toque=false;
+    // touchstart con preventDefault: el teclado del iPhone no se cierra al tocar el tono
+    b.addEventListener('touchstart',ev=>{ ev.preventDefault(); toque=true; aplica(); },{passive:false});
+    b.addEventListener('mousedown',ev=>ev.preventDefault());
+    b.addEventListener('click',()=>{ if(!toque) aplica(); toque=false; });
+  });
+  inp.focus();
+}
+// ---------- diálogo: ¿qué contesta? ----------
+function pDialogo(e){
+  const lin=e.d.lineas, x=lin[e.i];
+  e.ops=mezcla([x[1],...x[4]]); e.correcta=e.ops.indexOf(x[1]);
+  const prev=lin.slice(Math.max(0,e.i-2),e.i);
+  $('ej').innerHTML=`<span class="tag" style="display:inline-block;font-size:12px;font-weight:700;letter-spacing:.08em;color:var(--seal);border:1.5px solid var(--seal);padding:2px 8px;margin-bottom:6px">DIÁLOGO</span>
+    <h3>¿Qué contesta ${x[0]}?</h3>
+    <div class="chat">${prev.map(l=>`<div class="burb ${l[0]===x[0]?'b':''}"><div class="quien">${l[0]}</div><div class="h">${l[1]}</div><div class="p">${l[2]}</div>
+      <button class="oir" data-oir="${l[1]}">🔊 escuchar</button></div>`).join('')}
+      <div class="burb b hueco"><div class="quien">${x[0]}</div>¿…?</div></div>
+    <div class="opciones">${e.ops.map((o,i)=>`<button class="op frase" data-i="${i}">${o}</button>`).join('')}</div>`;
+  document.querySelectorAll('[data-oir]').forEach(b=>b.onclick=()=>habla(b.dataset.oir));
+  activaOpciones();
+}
+// Compara pinyin de palabras: acepta 'tóngxué', 'tong2xue2', 'tong2 xue2'; el tono neutro con o sin 5.
+const canon=s=>s.toLowerCase().normalize('NFC').replace(/[\s'’·\-]/g,'').replace(/u:/g,'ü').replace(/v/g,'ü');
+const sinTonos=s=>canon(s).normalize('NFD').replace(/[\u0300\u0301\u0304\u030C]/g,'').normalize('NFC').replace(/[0-5]/g,'');
+function pinyinPalabraOk(pal,x){
+  const p=P[pal], r=canon(x);
+  return [p.py, p.pn, p.pn.replace(/5/g,'')].map(canon).includes(r);
 }
 
 // ---------- pinyin ----------
@@ -420,15 +825,31 @@ function normaliza(x){
   return {base:s, tono};
 }
 
-function sellar(ch){ const m=document.querySelector('#ej .mizi'); if(m) m.insertAdjacentHTML('beforeend',`<i class="sello ${ch==='错'?'mal':''}">${ch}</i>`); }
+function sellar(ch){ const m=document.querySelector('#ej .palabra') || document.querySelector('#ej .mizi'); if(m) m.insertAdjacentHTML('beforeend',`<i class="sello ${ch==='错'?'mal':''}">${ch}</i>`); }
 // ---------- comprobar ----------
 $('accion').onclick=()=>{
   const e=L.actual;
   if(L.estado==='fin'){ volver(); return; }
   if(L.estado==='respondido'){ siguiente(); return; }
   if(e.tipo==='intro'){ L.hechos++; siguiente(); return; }
+  if(e.tipo==='pal-intro'){ L.hechos++; siguiente(); return; }
   let ok=false, sol='', extra='';
-  if(['significado','hanzi','tono','par'].includes(e.tipo)){
+  if(e.tipo==='dialogo'){
+    ok = L.sel===e.correcta; const x=e.d.lineas[e.i];
+    document.querySelectorAll('.op').forEach((b,i)=>{ if(i===e.correcta) b.classList.add('ok'); else if(i===L.sel) b.classList.add('bad'); });
+    sol=x[1]; extra=`${x[2]} · ${x[3]}`; habla(x[1]);
+  }else if(['pal-sig','pal-elige','pal-tono'].includes(e.tipo)){
+    ok = L.sel===e.correcta;
+    document.querySelectorAll('.op').forEach((b,i)=>{ if(i===e.correcta) b.classList.add('ok'); else if(i===L.sel) b.classList.add('bad'); });
+    const p=P[e.w];
+    sol = e.tipo==='pal-sig'? p.es : e.tipo==='pal-elige'? p.p : p.py;
+    extra = `<span class="cjk">${p.p}</span> ${p.py} · ${p.es}`;
+  }else if(e.tipo==='pal-escribe'){
+    const p=P[e.w], x=$('pyin').value;
+    ok = pinyinPalabraOk(e.w,x);
+    sol=p.py; extra = (!ok && sinTonos(x)===sinTonos(p.py)) ? 'Casi: el sonido está bien, pero algún tono no.' : p.es;
+    $('pyin').disabled=true;
+  }else if(['significado','hanzi','tono','par'].includes(e.tipo)){
     ok = L.sel===e.correcta;
     document.querySelectorAll('.op').forEach((b,i)=>{ if(i===e.correcta) b.classList.add('ok'); else if(i===L.sel) b.classList.add('bad'); });
     const c=C[e.tipo==='par'? e.p.h : e.hz];
@@ -444,7 +865,8 @@ $('accion').onclick=()=>{
     ok = e.orden.map(i=>e.fichas[i].t).join('|')===piezas.join('|'); sol=piezas.join(' '); extra=es;
   }
   L.estado='respondido';
-  const clave = e.tipo==='par'? e.p.h : e.tipo==='frase'? e.f[0] : e.hz;
+  const clave = e.tipo==='par'? e.p.h : e.tipo==='frase'? e.f[0] : e.tipo==='dialogo'? e.d.lineas[e.i][1] : (e.w || e.hz);
+  srsResponde(claveSRS(e), ok);
   if(ok){
     L.hechos++; if(!L.errados.has(e)) L.xpGanado++;
     S.aciertos[clave]=(S.aciertos[clave]||0)+1;
@@ -460,28 +882,172 @@ $('accion').onclick=()=>{
 };
 
 function fin(){
-  const id=idL(L.ui,L.l), xp=10+L.xpGanado;
-  S.xp+=xp; S.hechas[id]=S.hechas[id]||new Date().toISOString();
+  const xp=10+L.xpGanado;
+  S.xp+=xp;
+  if(L.modo==='leccion'){ const id=idL(L.ui,L.l); S.hechas[id]=S.hechas[id]||new Date().toISOString(); }
   if(S.ultimoDia!==hoy()){ S.racha = (S.ultimoDia===ayer()) ? S.racha+1 : 1; S.ultimoDia=hoy(); }
   guardar();
   $('avance').style.width='100%';
-  $('ej').innerHTML=`<div class="fin"><div class="mizi"><span>完</span></div><h2>Lección completa</h2>
-    <p style="color:var(--muted)">${UNIDADES[L.ui].t} · ${NOMBRES[L.l]}</p>
+  $('ej').innerHTML=`<div class="fin"><div class="mizi"><span>完</span></div><h2>${L.modo==='hoy'?'Práctica terminada':'Lección completa'}</h2>
+    <p style="color:var(--muted)">${L.titulo}</p>
     <div class="stats"><div><b>+${xp}</b>XP</div><div><b>${S.racha}</b>días de racha</div><div><b>${L.errados.size}</b>corregidos</div></div>
-    ${L.errados.size?'<p style="color:var(--muted)">Lo que fallaste te volvió a salir hasta que lo sacaste.</p>':'<p style="color:var(--jade)">Sin errores.</p>'}</div>`;
+    ${L.errados.size?'<p style="color:var(--muted)">Lo que fallaste te volvió a salir hasta que lo sacaste, y te lo vuelvo a preguntar pronto en 今 Hoy.</p>':'<p style="color:var(--jade)">Sin errores.</p>'}</div>`;
   setAbajo('', 'Continuar'); $('accion').disabled=false; L.estado='fin';
 }
 
+// ================== 写 PLANAS ==================
+// Orden de trazos: Hanzi Writer (MIT) + datos de Make Me a Hanzi (Arphic PL), empaquetados en trazos.json.
+let TRAZOS=null, cargandoTrazos=null;
+function cargaTrazos(){
+  if(TRAZOS) return Promise.resolve(TRAZOS);
+  return cargandoTrazos || (cargandoTrazos=fetch('trazos.json').then(r=>{ if(!r.ok) throw new Error('trazos.json '+r.status); return r.json(); })
+    .then(j=>TRAZOS=j).catch(err=>{ cargandoTrazos=null; throw err; }));
+}
+const infoHanzi=ch=> C[ch] ? [C[ch].py, C[ch].es] : P[ch] ? [P[ch].py, P[ch].es] : NUMEROS[ch] ? NUMEROS[ch] : ['',''];
+function gruposPlanas(){
+  const libro=[...new Set(palabrasLibro().join(''))];
+  return [{t:'Números', s:'la página de trazos de tu libro', hz:Object.keys(NUMEROS)},
+          {t:'Lección 1 del libro', s:'los caracteres de sus palabras', hz:libro},
+          ...UNIDADES.filter(u=>!u.libro).map(u=>({t:'Radicales '+u.t, s:u.d, hz:u.hz}))];
+}
+function pintaPlanas(){
+  const v=$('v-planas');
+  v.innerHTML=`<div class="caja" style="margin-top:18px"><h4>Planas con orden de trazos</h4>
+    <p class="nota" style="margin:0">Elige un hanzi: primero ves cómo se traza, luego lo calcas y al final lo escribes de memoria con el dedo.
+    Tres veces de memoria y se sella con 完.</p></div><div id="planas-lista"><p class="nota">Cargando trazos…</p></div>`;
+  cargaTrazos().then(()=>{
+    if(vista!=='planas') return;
+    $('planas-lista').innerHTML=gruposPlanas().map(g=>{ const hz=g.hz.filter(c=>TRAZOS[c]); if(!hz.length) return '';
+      const hechas=hz.filter(c=>(S.planas[c]||0)>=3).length;
+      return `<div class="grupo"><h4>${g.t} <small>· ${hechas}/${hz.length} · ${g.s}</small></h4><div class="rejilla">${hz.map(c=>
+        `<button class="${(S.planas[c]||0)>=3?'hecha':''}" data-plana="${c}">${c}</button>`).join('')}</div></div>`; }).join('');
+    document.querySelectorAll('[data-plana]').forEach(b=>b.onclick=()=>abrePlana(b.dataset.plana));
+  }).catch(err=>{ $('planas-lista').innerHTML=`<p class="nota">No se pudieron cargar los trazos (${err.message}). Abre la app una vez con internet para que se guarden.</p>`; });
+}
+let W=null, modoPlana='ver', planaCh=null;
+function contadorPlana(ch){ const n=S.planas[ch]||0; return n>=3 ? `完 · lo has escrito ${n} veces de memoria` : `De memoria: ${n}/3`; }
+function abrePlana(ch){
+  cierraFicha();
+  cargaTrazos().then(()=>{
+    if(!TRAZOS[ch]){ muestraError('No tengo los trazos de '+ch); return; }
+    planaCh=ch; modoPlana='ver';
+    $('camino').style.display='none'; $('leccion').style.display='none'; $('plana').style.display='block'; window.scrollTo(0,0);
+    const [py,es]=infoHanzi(ch), d=TRAZOS[ch];
+    $('plana-titulo').innerHTML=`<span class="cjk" style="font-size:22px">${ch}</span> ${py} · ${es}`;
+    const paso=k=>`<svg viewBox="0 0 1024 1024"><g transform="translate(0,900) scale(1,-1)">${d.strokes.map((s,i)=>
+      `<path d="${s}" fill="${i<k?(i===k-1?'#b5312b':'#1d1b18'):'#d9d4c7'}"/>`).join('')}</g></svg>`;
+    $('plana-cuerpo').innerHTML=`<p class="nota" style="text-align:center;margin-top:4px">${d.strokes.length} trazos, en este orden:</p>
+      <div class="pasos">${d.strokes.map((s,i)=>paso(i+1)).join('')}</div>
+      <div class="modos"><button data-m="ver">1 · Ver</button><button data-m="calcar">2 · Calcar</button><button data-m="memoria">3 · De memoria</button></div>
+      <div id="lienzo"></div><div id="plana-msg"></div>
+      <p class="nota" style="text-align:center" id="plana-cuenta"></p>
+      <div style="text-align:center"><button class="oir" id="plana-oir">🔊 escuchar</button></div>`;
+    $('plana-oir').onclick=()=>habla(ch);
+    document.querySelectorAll('.modos button').forEach(b=>b.onclick=()=>{ modoPlana=b.dataset.m; arrancaPlana(); });
+    arrancaPlana();
+  }).catch(err=>muestraError('No se pudieron cargar los trazos: '+err.message));
+}
+function arrancaPlana(msg){
+  const ch=planaCh;
+  document.querySelectorAll('.modos button').forEach(b=>b.classList.toggle('on',b.dataset.m===modoPlana));
+  $('plana-cuenta').textContent = contadorPlana(ch);
+  $('plana-msg').textContent = msg || (modoPlana==='ver' ? '' : modoPlana==='calcar' ? 'Traza encima del gris, en orden.' : 'Ahora sin ayuda. Si fallas 3 veces un trazo, te lo muestro.');
+  $('plana-msg').style.color = msg ? 'var(--jade)' : 'var(--ink2)';
+  if(typeof HanziWriter==='undefined'){ $('lienzo').innerHTML='<p class="nota" style="padding:20px">Falta hanzi-writer.min.js</p>'; return; }
+  if(W){ try{ W.cancelQuiz(); }catch(e){} } $('lienzo').innerHTML='';
+  W=HanziWriter.create('lienzo', ch, {width:280,height:280,padding:16, charDataLoader:(c,listo)=>listo(TRAZOS[c]),
+    showCharacter:false, showOutline:modoPlana!=='memoria', strokeColor:'#1d1b18', outlineColor:'#d9d4c7', highlightColor:'#b5312b',
+    drawingColor:'#1d1b18', drawingWidth:26, strokeAnimationSpeed:1.1, delayBetweenStrokes:280, showHintAfterMisses:modoPlana==='memoria'?3:1});
+  if(modoPlana==='ver'){ W.loopCharacterAnimation(); return; }
+  W.quiz({ onComplete:r=>{
+    if(modoPlana==='memoria'){ S.planas[ch]=(S.planas[ch]||0)+1;
+      if(S.ultimoDia!==hoy()){ S.racha=(S.ultimoDia===ayer())?S.racha+1:1; S.ultimoDia=hoy(); } guardar(); }
+    const m = r.totalMistakes ? `对 · con ${r.totalMistakes} error${r.totalMistakes>1?'es':''}. Otra vez:` : '对 ¡perfecto! Otra vez:';
+    $('plana-msg').textContent=m; $('plana-msg').style.color='var(--jade)'; $('plana-cuenta').textContent=contadorPlana(ch);
+    setTimeout(()=>{ if(planaCh===ch) arrancaPlana(m); },1300);
+  }});
+}
+$('plana-salir').onclick=()=>{ if(W){ try{ W.cancelQuiz(); }catch(e){} } W=null; planaCh=null;
+  $('plana').style.display='none'; $('camino').style.display='block'; pinta(); };
+
+// ================== 树 ÁRBOL ==================
+// Grafo radical → hanzi → palabras. Color: gris = sin ver, tinta = visto, rojo = dominado.
+let filtroArbol='libro';
+function estadoHanzi(ch){
+  const k=Math.max(nivel('h:'+ch), nivel('p:'+ch), (S.planas[ch]||0)>=3?2:0);
+  if(k>=3) return 2; if(k>=1) return 1;
+  return palabrasLibro().some(w=>w.includes(ch) && S.srs['p:'+w]) ? 1 : 0;
+}
+const estadoPal=w=>{ const k=nivel('p:'+w); return k>=3?2:k>=1?1:0; };
+function pintaArbol(){
+  const libro=palabrasLibro(), multi=libro.filter(w=>[...w].length>1);
+  const hz = filtroArbol==='libro' ? [...new Set(libro.join(''))] : [...new Set([...Object.keys(C), ...libro.join('')])];
+  const porRad={};
+  hz.forEach(ch=>{ const r=radDe(ch)||'?'; (porRad[r]=porRad[r]||[]).push(ch); });
+  const rads=Object.keys(porRad).sort((a,b)=>porRad[b].length-porRad[a].length);
+  const RH=40, X=[30,120,250]; let y=24; const nodos=[], aristas=[];
+  rads.forEach(r=>{
+    const y0=y, propias=[];
+    porRad[r].forEach(ch=>{
+      const pals=multi.filter(w=>w.includes(ch)), filas=Math.max(1,pals.length), yh=y+(filas-1)*RH/2;
+      pals.forEach((w,i)=>{ const yw=y+i*RH; nodos.push({tipo:'p',id:w,x:X[2],y:yw}); aristas.push([X[1],yh,X[2],yw,estadoPal(w)]); });
+      nodos.push({tipo:'h',id:ch,x:X[1],y:yh}); const a=[X[0],0,X[1],yh,estadoHanzi(ch)]; aristas.push(a); propias.push(a);
+      y+=filas*RH;
+    });
+    const yr=(y0+y-RH)/2;
+    propias.forEach(a=>a[1]=yr);
+    nodos.push({tipo:'r',id:r,x:X[0],y:yr});
+    y+=14;
+  });
+  const color=s=>[['#ece8de','#b9b2a3','#9a9384'],['#f3f1ea','#1d1b18','#1d1b18'],['#b5312b','#b5312b','#fff']][s];
+  const nodo=n=>{
+    if(n.tipo==='p'){ const [f,st,tx]=color(estadoPal(n.id)), wpx=[...n.id].length*20+20;
+      return `<g class="nd" data-t="p" data-id="${n.id}"><rect x="${n.x-8}" y="${n.y-15}" width="${wpx}" height="30" rx="15" fill="${f}" stroke="${st}" stroke-width="1.5"/>
+        <text x="${n.x+2}" y="${n.y+7}" font-size="19" font-family="Kai,KaiTi,serif" fill="${tx}">${n.id}</text></g>`; }
+    const s = n.tipo==='h' ? estadoHanzi(n.id) : Math.max(...porRad[n.id].map(estadoHanzi)), [f,st,tx]=color(s), rr=n.tipo==='r'?19:16;
+    return `<g class="nd" data-t="${n.tipo}" data-id="${n.id}"><circle cx="${n.x}" cy="${n.y}" r="${rr}" fill="${f}" stroke="${st}" stroke-width="${n.tipo==='r'?2.5:1.5}"/>
+      <text x="${n.x}" y="${n.y+7}" text-anchor="middle" font-size="${n.tipo==='r'?22:20}" font-family="Kai,KaiTi,serif" fill="${tx}">${n.id}</text></g>`;
+  };
+  const arista=([x1,y1,x2,y2,s])=>`<path d="M${x1+18} ${y1} C ${(x1+x2)/2} ${y1}, ${(x1+x2)/2} ${y2}, ${x2-16} ${y2}" fill="none"
+      stroke="${s===2?'#b5312b':s===1?'#4a463e':'#cfc9bb'}" stroke-width="${s?1.6:1.2}"/>`;
+  const vistos=hz.filter(c=>estadoHanzi(c)>0).length;
+  $('v-arbol').innerHTML=`<div class="filtro"><button data-f="libro" class="${filtroArbol==='libro'?'on':''}">Libro</button>
+      <button data-f="todo" class="${filtroArbol==='todo'?'on':''}">Todo</button></div>
+    <div class="leyenda"><span><i style="background:#ece8de;border-color:#b9b2a3"></i>sin ver</span><span><i style="background:#f3f1ea"></i>visto</span>
+      <span><i style="background:#b5312b;border-color:#b5312b"></i>dominado</span><span>${vistos}/${hz.length} hanzi</span></div>
+    <p class="nota">Radical → hanzi → palabras. Toca una bolita.</p>
+    <svg id="arbol-svg" viewBox="0 0 360 ${y}">${aristas.map(arista).join('')}${nodos.map(nodo).join('')}</svg>`;
+  document.querySelectorAll('.filtro button').forEach(b=>b.onclick=()=>{ filtroArbol=b.dataset.f; pintaArbol(); });
+  document.querySelectorAll('#arbol-svg .nd').forEach(g=>g.onclick=()=>abreFicha(g.dataset.t,g.dataset.id));
+}
+function abreFicha(tipo,id){
+  const f=$('ficha');
+  let py='',es='',extra='';
+  if(tipo==='r'){ es='Radical: '+(RADS[id]||''); }
+  else if(tipo==='p'){ py=P[id].py; es=P[id].es; }
+  else { [py,es]=infoHanzi(id);
+    const w=palabrasLibro().filter(x=>x.includes(id) && x!==id);
+    extra=[w.length?'Aparece en: '+w.join(', '):'', radDe(id)?`Radical ${radDe(id)}: ${RADS[radDe(id)]||''}`:''].filter(Boolean).join(' · '); }
+  f.innerHTML=`<button class="cerrar" id="ficha-x">✕</button><div class="h">${id}</div><div class="p">${py}</div><div>${es}</div>
+    ${extra?`<p class="nota">${extra}</p>`:''}
+    <div class="acciones">${tipo!=='r'?'<button id="ficha-oir">🔊 Escuchar</button>':''}${tipo!=='p'?'<button id="ficha-plana">写 Plana</button>':''}</div>`;
+  f.style.display='block';
+  $('ficha-x').onclick=cierraFicha;
+  if($('ficha-oir')) $('ficha-oir').onclick=()=>habla(id);
+  if($('ficha-plana')) $('ficha-plana').onclick=()=>abrePlana(id);
+}
+function cierraFicha(){ const f=document.getElementById('ficha'); if(f) f.style.display='none'; }
+
 // ---------- extras ----------
 $('exportar').onclick=()=>{
-  const data={app:'hanzi-camino',version:1,exportado:new Date().toISOString(),xp:S.xp,racha:S.racha,ultimo_dia:S.ultimoDia,
-    lecciones_hechas:S.hechas,aciertos:S.aciertos,fallos:S.fallos};
+  const data={app:'hanzi-camino',version:2,exportado:new Date().toISOString(),xp:S.xp,racha:S.racha,ultimo_dia:S.ultimoDia,
+    lecciones_hechas:S.hechas,aciertos:S.aciertos,fallos:S.fallos,repaso:S.srs,planas:S.planas};
   const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([JSON.stringify(data,null,2)],{type:'application/json'}));
   a.download='hanzi-progreso-'+hoy()+'.json'; a.click();
 };
-$('borrar').onclick=()=>{ if(confirm('¿Borrar todo tu progreso?')){ S=VACIO(); guardar(); pintaCamino(); } };
-pintaCamino();
-if('serviceWorker' in navigator && location.protocol.startsWith('http')) navigator.serviceWorker.register('sw.js');
+$('borrar').onclick=()=>{ if(confirm('¿Borrar todo tu progreso?')){ S=VACIO(); guardar(); pinta(); } };
+pinta();
+if('serviceWorker' in navigator && location.protocol.startsWith('http')) navigator.serviceWorker.register('sw.js').catch(e=>{});
 </script>
 </body>
 </html>
