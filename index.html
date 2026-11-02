@@ -187,6 +187,8 @@
   .caja h4{margin:0 0 8px;font-size:15px}
   .debiles{display:flex;flex-wrap:wrap;gap:8px}
   .debiles span{font-family:var(--kai);font-size:24px;border:1.5px solid var(--line);padding:2px 10px;background:var(--paper)}
+  .debiles span.larga{font-size:17px}
+  .debiles small{font-family:system-ui;font-size:11px;color:var(--muted);margin-left:5px}
   .numeros{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;text-align:center}
   .numeros b{display:block;font-size:24px} .numeros div{font-size:12px;color:var(--muted)}
   /* Libro */
@@ -444,7 +446,9 @@ const NOMBRES=['Parte 1','Parte 2','Repaso de la unidad'];
 const KEY='hanzi-camino-v1';
 // srs: repetición espaciada. Clave 'p:<palabra>' o 'h:<hanzi>' → {iv: días, due: 'AAAA-MM-DD', n: aciertos, f: fallos}
 // planas: hanzi → veces escrito de memoria.
-const VACIO=()=>({hechas:{}, xp:0, racha:0, ultimoDia:null, aciertos:{}, fallos:{}, srs:{}, planas:{}, sonido:true, vibra:true});
+// errores: banco de errores. Clave 'p:'/'h:' (palabra/hanzi), 'r:' (par de radicales), 'f:' (frase), 'd:' (línea de diálogo)
+//          → {f: veces fallado, ok: aciertos seguidos (en días distintos), dia: último día que contó, fallo: último día que lo fallaste}
+const VACIO=()=>({hechas:{}, xp:0, racha:0, ultimoDia:null, aciertos:{}, fallos:{}, srs:{}, planas:{}, errores:{}, sonido:true, vibra:true});
 let S = (()=>{ try{ return Object.assign(VACIO(), JSON.parse(localStorage.getItem(KEY))||{}) }catch(e){ return VACIO() } })();
 const guardar=()=>{ try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){} };
 const fecha=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
@@ -468,6 +472,51 @@ function srsResponde(clave, ok){
   r.due = masDias(r.iv);
 }
 const claveSRS=e=> e.w ? 'p:'+e.w : e.hz ? 'h:'+e.hz : (e.tipo==='par' ? 'h:'+e.p.h : null);
+
+// ---------- banco de errores ----------
+// Todo lo que falles, sea del nivel que sea, entra aquí y te va saliendo en 今 Hoy.
+// Sale del banco tras SALIR_BANCO aciertos seguidos, cada uno en un día distinto (el día que lo fallas no cuenta).
+// Un fallo reinicia la cuenta.
+const SALIR_BANCO=3, MAX_BANCO_HOY=5;
+const claveError=e=> e.w ? 'p:'+e.w : e.hz ? 'h:'+e.hz : e.tipo==='par' ? 'r:'+e.p.h
+  : e.tipo==='frase' ? 'f:'+e.f[0] : e.tipo==='dialogo' ? 'd:'+e.d.lineas[e.i][1] : null;
+function bancoResponde(e, ok){
+  const k=claveError(e); if(!k) return;
+  const r=S.errores[k];
+  if(!ok){ const x=r||(S.errores[k]={f:0,ok:0,dia:null,fallo:null}); x.f++; x.ok=0; x.dia=null; x.fallo=hoy(); return; }
+  if(!r || r.fallo===hoy() || r.dia===hoy()) return;
+  r.ok++; r.dia=hoy();
+  if(r.ok>=SALIR_BANCO){ delete S.errores[k]; L.graduados.push(k); }
+}
+// Arma un ejercicio a partir de una clave (del repaso o del banco). null si ya no existe en los datos.
+function ejercicioDe(k){
+  const t=k[0], x=k.slice(2), una=a=>a[Math.floor(Math.random()*a.length)], iv=(S.srs[k]||{}).iv||0;
+  if(t==='p'){ if(!P[x]) return null;
+    return {tipo:una(palConTono(x) ? (iv>=3 ? ['pal-elige','pal-escribe','pal-tono','pal-escribe'] : ['pal-sig','pal-elige','pal-tono']) : ['pal-sig','pal-elige']), w:x, pool:Object.keys(P)}; }
+  if(t==='h'){ if(!C[x]) return null;
+    return {tipo:una(conTono(x) ? (iv>=3 ? ['hanzi','escribe','tono'] : ['significado','hanzi','tono']) : ['significado','hanzi']), hz:x, pool:Object.keys(C)}; }
+  if(t==='r'){ const p=UNIDADES.flatMap(u=>u.pares||[]).find(p=>p.h===x); return p ? {tipo:'par',p} : null; }
+  if(t==='f'){ const f=UNIDADES.flatMap(u=>u.frases||[]).find(f=>f[0]===x); return f ? {tipo:'frase',f} : null; }
+  if(t==='d'){ for(const u of UNIDADES) for(const d of u.dialogos||[]){ const i=d.lineas.findIndex(l=>l[1]===x && l[4]); if(i>=0) return {tipo:'dialogo',d,i}; } }
+  return null;
+}
+// Sorteo con peso: lo que más has fallado sale más seguido. No repite lo que ya contó hoy.
+function erroresParaHoy(excluir){
+  const cand=Object.entries(S.errores).filter(([k,r])=>!excluir.has(k) && r.fallo!==hoy() && r.dia!==hoy()), out=[];
+  while(cand.length && out.length<MAX_BANCO_HOY){
+    let z=Math.random()*cand.reduce((s,[,r])=>s+r.f,0), i=0;
+    while(i<cand.length-1 && (z-=cand[i][1].f)>0) i++;
+    const [k]=cand.splice(i,1)[0], e=ejercicioDe(k);
+    if(e){ e.banco=true; out.push(e); }
+  }
+  return out;
+}
+const textoClave=k=>k.slice(2);
+// Una sola vez: lo que ya habías fallado antes de que existiera el banco (y aún no dominas) entra al banco.
+if(!S.bancoSembrado){
+  for(const [k,r] of Object.entries(S.srs)) if(r.f>0 && r.iv<4 && !S.errores[k]) S.errores[k]={f:r.f,ok:0,dia:null,fallo:null};
+  S.bancoSembrado=true; guardar();
+}
 const nivel=clave=>{ const r=S.srs[clave]; return !r ? 0 : r.iv>=21 ? 3 : r.iv>=4 ? 2 : 1; };
 const vencidas=()=>Object.entries(S.srs).filter(([k,r])=>r.due<=hoy() && (k.startsWith('p:')?P[k.slice(2)]:C[k.slice(2)]))
                                         .sort((a,b)=>a[1].due<b[1].due?-1:1).map(([k])=>k);
@@ -541,32 +590,29 @@ function pinta(){
 function armaHoy(){
   const due=vencidas().slice(0,15);
   const nuevas=palabrasLibro().filter(w=>!S.srs['p:'+w]).slice(0, due.length>=12?3:5);
-  const poolP=Object.keys(P), poolH=Object.keys(C);
-  const repaso=due.map(k=>{
-    const x=k.slice(2), r=S.srs[k];
-    if(k.startsWith('p:')){
-      const t=palConTono(x) ? (r.iv>=3 ? ['pal-elige','pal-escribe','pal-tono','pal-escribe'] : ['pal-sig','pal-elige','pal-tono']) : ['pal-sig','pal-elige'];
-      return {tipo:t[Math.floor(Math.random()*t.length)], w:x, pool:poolP};
-    }
-    const t=conTono(x) ? (r.iv>=3 ? ['hanzi','escribe','tono'] : ['significado','hanzi','tono']) : ['significado','hanzi'];
-    return {tipo:t[Math.floor(Math.random()*t.length)], hz:x, pool:poolH};
-  });
+  const poolP=Object.keys(P);
+  const repaso=due.map(ejercicioDe).filter(Boolean);
+  const errores=erroresParaHoy(new Set(due));   // errores del banco, de cualquier nivel, aunque no les toque
   const intro=nuevas.flatMap(w=>[{tipo:'pal-intro',w},{tipo:'pal-sig',w,pool:poolP}]);
-  return {cola:[...intro, ...mezcla([...repaso, ...nuevas.map(w=>({tipo:'pal-elige',w,pool:poolP}))])], due:due.length, nuevas:nuevas.length};
+  return {cola:[...intro, ...mezcla([...repaso, ...errores, ...nuevas.map(w=>({tipo:'pal-elige',w,pool:poolP}))])],
+          due:due.length, errores:errores.length, nuevas:nuevas.length};
 }
 function pintaHoy(){
-  const {cola,due,nuevas}=armaHoy(), todas=Object.keys(S.srs);
+  const {cola,due,errores,nuevas}=armaHoy(), todas=Object.keys(S.srs);
+  const banco=Object.entries(S.errores).sort((a,b)=>b[1].f-a[1].f);
   const pal=todas.filter(k=>k.startsWith('p:')).length, hz=todas.filter(k=>k.startsWith('h:')).length;
   const dominadas=todas.filter(k=>nivel(k)===3).length, manana=Object.values(S.srs).filter(r=>r.due===masDias(1)).length;
-  const debiles=Object.entries(S.srs).filter(([k,r])=>r.f>0).sort((a,b)=>(b[1].f-b[1].n/3)-(a[1].f-a[1].n/3)).slice(0,8).map(([k])=>k.slice(2));
   const min=Math.max(1,Math.round(cola.length*0.35));
   $('v-hoy').innerHTML=`
     <div class="hoy"><span class="sellohoy">今</span>
       <h3>Práctica de hoy</h3>
       <p>${cola.length ? 'Te sale justo lo que estás por olvidar, más unas palabras nuevas del libro.' : 'Todo al día. Vuelve mañana o avanza en 课 Libro.'}</p>
-      <div class="meta"><span>${due} repasos</span><span>${nuevas} nuevas</span><span>~${min} min</span></div>
+      <div class="meta"><span>${due} repasos</span><span>${errores} errores</span><span>${nuevas} nuevas</span><span>~${min} min</span></div>
       <button class="go" id="go-hoy" ${cola.length?'':'disabled'}>${cola.length?'EMPEZAR':'TODO AL DÍA ✓'}</button></div>
-    ${debiles.length?`<div class="caja"><h4>Te están costando</h4><div class="debiles">${debiles.map(x=>`<span>${x}</span>`).join('')}</div></div>`:''}
+    ${banco.length?`<div class="caja"><h4>错 Banco de errores · ${banco.length}</h4>
+      <p class="nota" style="margin:0 0 8px">Te salen al azar en Hoy. Cada uno sale del banco cuando lo aciertas ${SALIR_BANCO} días distintos seguidos.</p>
+      <div class="debiles">${banco.slice(0,12).map(([k,r])=>`<span class="${'fd'.includes(k[0])?'larga':''}">${textoClave(k)}<small>${r.ok}/${SALIR_BANCO}</small></span>`).join('')}</div>
+      ${banco.length>12?`<p class="nota" style="margin-top:8px">y ${banco.length-12} más</p>`:''}</div>`:''}
     <div class="caja"><h4>Tu avance</h4><div class="numeros">
       <div><b>${pal}</b>palabras</div><div><b>${hz}</b>hanzi</div><div><b>${dominadas}</b>dominadas</div></div>
       <p class="nota" style="margin-top:10px">${manana?`Mañana te tocan ${manana} repasos.`:'Lo que aprendes en Libro entra aquí solo, para repasarlo a tiempo.'}</p></div>`;
@@ -670,7 +716,7 @@ let L=null;
 const $=id=>document.getElementById(id);
 function empezar(ui,l){ empezarCola(armaLeccion(ui,l),{modo:'leccion',ui,l,titulo:UNIDADES[ui].t+' · '+NOMBRES[l]}); }
 function empezarCola(cola,extra){
-  L=Object.assign({cola,total:cola.length,hechos:0,errados:new Set(),srsTocado:new Set(),xpGanado:0,actual:null,estado:'pregunta'},extra);
+  L=Object.assign({cola,total:cola.length,hechos:0,errados:new Set(),srsTocado:new Set(),graduados:[],xpGanado:0,actual:null,estado:'pregunta'},extra);
   cierraFicha(); $('camino').style.display='none'; $('leccion').style.display='flex'; window.scrollTo(0,0);
   siguiente();
 }
@@ -923,7 +969,8 @@ $('accion').onclick=()=>{
   }
   L.estado='respondido';
   const clave = e.tipo==='par'? e.p.h : e.tipo==='frase'? e.f[0] : e.tipo==='dialogo'? e.d.lineas[e.i][1] : (e.w || e.hz);
-  srsResponde(claveSRS(e), ok);
+  if(!(e.banco && ok)) srsResponde(claveSRS(e), ok);   // un error del banco acertado antes de tiempo no alarga su repaso
+  bancoResponde(e, ok);
   if(ok){
     L.hechos++; if(!L.errados.has(e)) L.xpGanado++;
     S.aciertos[clave]=(S.aciertos[clave]||0)+1;
@@ -971,8 +1018,9 @@ function fin(){
     <h2>${L.modo==='hoy'?'Práctica terminada':perfecta?'¡Lección perfecta!':'Lección completa'}</h2>
     <p class="sub2">${L.titulo}</p>
     <div class="stats"><div><b data-cuenta="${xp}" data-pre="+">+0</b>XP</div><div><b data-cuenta="${S.racha}">0</b>días de racha</div><div><b data-cuenta="${L.xpGanado}">0</b>a la primera</div></div>
+    ${L.graduados.length?`<p class="msg" style="color:var(--jade)">Salieron del banco de errores: <span class="cjk">${L.graduados.map(textoClave).join(' · ')}</span> 好！</p>`:''}
     ${perfecta?'<p class="msg" style="color:var(--jade)">Sin un solo error. 好！</p>'
-      :`<div class="lista"><h4>Para repasar (te las vuelvo a preguntar pronto en 今 Hoy)</h4>${fallos.map(f=>`<div><b>${f.h}</b><span><i>${f.py}</i> ${f.es}</span></div>`).join('')}</div>`}</div>`;
+      :`<div class="lista"><h4>Al banco de errores (te saldrán en 今 Hoy hasta que las aciertes ${SALIR_BANCO} días distintos)</h4>${fallos.map(f=>`<div><b>${f.h}</b><span><i>${f.py}</i> ${f.es}</span></div>`).join('')}</div>`}</div>`;
   setAbajo('', 'Continuar'); $('accion').disabled=false; L.estado='fin';
   efecto('fin',.15); setTimeout(()=>vibra(2),550);
   setTimeout(()=>document.querySelectorAll('[data-cuenta]').forEach(b=>cuenta(b,+b.dataset.cuenta,b.dataset.pre||'')),800);
@@ -1125,8 +1173,8 @@ function cierraFicha(){ const f=document.getElementById('ficha'); if(f) f.style.
 
 // ---------- extras ----------
 $('exportar').onclick=()=>{
-  const data={app:'hanzi-camino',version:2,exportado:new Date().toISOString(),xp:S.xp,racha:S.racha,ultimo_dia:S.ultimoDia,
-    lecciones_hechas:S.hechas,aciertos:S.aciertos,fallos:S.fallos,repaso:S.srs,planas:S.planas};
+  const data={app:'hanzi-camino',version:3,exportado:new Date().toISOString(),xp:S.xp,racha:S.racha,ultimo_dia:S.ultimoDia,
+    lecciones_hechas:S.hechas,aciertos:S.aciertos,fallos:S.fallos,repaso:S.srs,planas:S.planas,banco_errores:S.errores};
   const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([JSON.stringify(data,null,2)],{type:'application/json'}));
   a.download='hanzi-progreso-'+hoy()+'.json'; a.click();
 };
