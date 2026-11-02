@@ -26,8 +26,29 @@
     display:flex;justify-content:space-between;align-items:center;padding:12px 18px;border-bottom:1.5px solid var(--ink)}
   #camino header h1{margin:0;font-family:var(--kai);font-size:30px;font-weight:400;letter-spacing:4px}
   .chips{display:flex;gap:16px;font-weight:700;font-size:15px;align-items:center}
-  .ajuste{font-size:19px;width:34px;height:34px;border:1.5px solid var(--line);border-radius:50%;display:inline-flex;align-items:center;justify-content:center;background:var(--sheet)}
-  .ajuste.off{opacity:.45}
+  .ajuste{width:32px;height:32px;display:inline-flex;align-items:center;justify-content:center;font-family:var(--kai);font-size:20px;line-height:1;
+    border-radius:5px;background:var(--seal);color:#f6e9e4;transform:rotate(-6deg);box-shadow:inset 0 0 0 2px var(--seal),inset 0 0 0 3.5px #f6e9e4;
+    transition:transform .15s,background .15s}
+  .ajuste:active{transform:rotate(-6deg) scale(.9)}
+  .ajuste.off{background:transparent;color:var(--muted);box-shadow:none;border:1.5px dashed var(--line);transform:none}
+  .ico{display:inline-block;width:1.1em;height:1.1em;vertical-align:-.18em}
+  .oir{gap:7px}
+  .bocina{color:var(--ink2);padding:6px}
+  /* diálogo propio (en vez del confirm del navegador) */
+  #dlg{position:fixed;inset:0;z-index:50;display:none;align-items:flex-end;justify-content:center;background:#1d1b1866}
+  #dlg.on{display:flex;animation:dlgFondo .18s ease-out}
+  #dlg .caja{width:100%;max-width:560px;background:var(--paper);border-top:2px solid var(--ink);padding:26px 20px calc(18px + env(safe-area-inset-bottom));
+    position:relative;animation:dlgSube .22s ease-out}
+  #dlg .caja::before{content:"";position:absolute;left:12px;top:0;bottom:0;width:1.5px;background:var(--seal);opacity:.5}
+  #dlg .sellod{position:absolute;right:20px;top:-24px;width:52px;height:52px;border-radius:6px;background:var(--seal);color:#f6e9e4;font-family:var(--kai);
+    font-size:30px;display:flex;align-items:center;justify-content:center;transform:rotate(-8deg);box-shadow:inset 0 0 0 3px var(--seal),inset 0 0 0 5px #f6e9e4}
+  #dlg h3{margin:0 70px 6px 10px;font-size:20px} #dlg p{margin:0 0 18px 10px;color:var(--ink2);line-height:1.45}
+  #dlg .bots{display:flex;gap:10px} #dlg .bots .btn{flex:1}
+  #dlg .btn.sec{background:transparent;color:var(--ink);border:1.5px solid var(--ink)}
+  #dlg .btn.peligro{background:var(--seal)}
+  @keyframes dlgSube{from{transform:translateY(100%)}to{transform:none}}
+  @keyframes dlgFondo{from{background:#1d1b1800}to{background:#1d1b1866}}
+  @media (prefers-reduced-motion:reduce){#dlg.on,#dlg .caja{animation:none}}
   .chips .ajustes{display:flex;gap:6px}
   .unidad{margin:24px 0 8px;background:var(--sheet);padding:16px 16px 14px 22px;border:1.5px solid var(--ink);position:relative}
   .unidad::before{content:"";position:absolute;left:10px;top:0;bottom:0;width:1.5px;background:var(--seal);opacity:.55}
@@ -198,6 +219,7 @@
 </head>
 <body>
 <div id="error"></div>
+<div id="dlg" role="dialog" aria-modal="true"><div class="caja"><div class="sellod" id="dlg-sello"></div><h3 id="dlg-t"></h3><p id="dlg-p"></p><div class="bots"><button class="btn sec" id="dlg-no"></button><button class="btn" id="dlg-si"></button></div></div></div>
 <input type="checkbox" switch id="haptico" aria-hidden="true" tabindex="-1" style="position:absolute;left:-9999px"><label for="haptico" id="haptico-l" style="position:absolute;left:-9999px">.</label>
 <script>
 // Muestra cualquier error en pantalla (sirve para depurar en el celular).
@@ -210,7 +232,7 @@ window.addEventListener('unhandledrejection',function(ev){ muestraError(String(e
   <header>
     <h1>汉字</h1>
     <div class="chips"><span>Racha <b id="racha">0</b></span><span>XP <b id="xp">0</b></span>
-      <span class="ajustes"><button class="ajuste" data-ajuste="sonido" aria-label="sonido">🔊</button><button class="ajuste" data-ajuste="vibra" aria-label="vibración">📳</button></span></div>
+      <span class="ajustes"><button class="ajuste" data-ajuste="sonido" aria-label="sonido">声</button><button class="ajuste" data-ajuste="vibra" aria-label="vibración">振</button></span></div>
   </header>
   <div class="vista wrap" id="v-hoy"></div>
   <div class="vista" id="v-libro">
@@ -234,7 +256,7 @@ window.addEventListener('unhandledrejection',function(ev){ muestraError(String(e
 </section>
 
 <section id="leccion">
-  <div class="top wrap" style="width:100%"><button class="x" id="salir">✕</button><div class="barra"><i id="avance"></i></div><button class="ajuste" data-ajuste="sonido" aria-label="sonido">🔊</button></div>
+  <div class="top wrap" style="width:100%"><button class="x" id="salir">✕</button><div class="barra"><i id="avance"></i></div><button class="ajuste" data-ajuste="sonido" aria-label="sonido">声</button></div>
   <div class="ej wrap" id="ej" style="width:100%"></div>
   <div class="abajo" id="abajo"><div class="in">
     <div class="fb" id="fb"></div>
@@ -511,7 +533,21 @@ function vibra(n){
     const l=document.getElementById('haptico-l'); l.click(); if(n>1) setTimeout(()=>l.click(),110); }catch(e){}
 }
 function pintaAjustes(){ document.querySelectorAll('[data-ajuste]').forEach(b=>{ const k=b.dataset.ajuste;
-  b.classList.toggle('off',!S[k]); b.textContent = k==='sonido' ? (S.sonido?'🔊':'🔇') : '📳'; }); }
+  b.classList.toggle('off',!S[k]); b.textContent = k==='sonido' ? (S.sonido?'声':'静') : '振';
+  b.setAttribute('aria-label', k==='sonido' ? (S.sonido?'sonido encendido':'sonido apagado') : (S.vibra?'vibración encendida':'vibración apagada')); }); }
+// Icono de bocina dibujado en tinta (en vez del emoji).
+const ICO_OIR='<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+
+  '<path d="M4 9.5h3.2L12 5.5v13l-4.8-4H4z" fill="currentColor" fill-opacity=".12"/><path d="M15.5 9.2a4 4 0 0 1 0 5.6M18.2 6.6a7.6 7.6 0 0 1 0 10.8"/></svg>';
+// ---------- diálogo propio ----------
+// pregunta({sello,titulo,texto,si,no,peligro}) → Promise<boolean>. Toca fuera o 'no' = false.
+function pregunta(o){ return new Promise(ok=>{
+  const d=$('dlg'); $('dlg-sello').textContent=o.sello||'问'; $('dlg-t').textContent=o.titulo; $('dlg-p').textContent=o.texto||'';
+  $('dlg-si').textContent=o.si; $('dlg-no').textContent=o.no; $('dlg-si').classList.toggle('peligro',!!o.peligro);
+  const cierra=v=>{ d.classList.remove('on'); d.onclick=null; ok(v); };
+  $('dlg-si').onclick=ev=>{ ev.stopPropagation(); cierra(true); }; $('dlg-no').onclick=ev=>{ ev.stopPropagation(); cierra(false); };
+  d.onclick=ev=>{ if(ev.target===d) cierra(false); };
+  d.classList.add('on'); vibra(1);
+}); }
 document.querySelectorAll('[data-ajuste]').forEach(b=>b.onclick=()=>{ const k=b.dataset.ajuste; S[k]=!S[k]; guardar(); pintaAjustes();
   if(k==='sonido' && S.sonido){ cargaSonidos().then(()=>efecto('tap')); } if(k==='vibra') vibra(1); });
 // el iPhone solo deja sonar audio después de un toque: se prepara en el primer toque
@@ -594,11 +630,11 @@ function vocabularioHTML(u){
   const marcas=['','✓','✓✓','✓✓✓'];
   const tabla=`<table class="voc">${u.pal.map(w=>{ const p=P[w];
     return `<tr><td class="h">${w}</td><td class="p">${p.py}</td><td>${p.es}</td><td class="m">${marcas[nivel('p:'+w)]}</td>
-            <td><button data-oir="${w}" aria-label="escuchar">🔊</button></td></tr>`; }).join('')}</table>
+            <td><button class="bocina" data-oir="${w}" aria-label="escuchar">${ICO_OIR}</button></td></tr>`; }).join('')}</table>
     <p class="nota">✓ visto · ✓✓ lo recuerdas · ✓✓✓ dominado</p>`;
   const dlg=(u.dialogos||[]).map(d=>`<h4 style="margin:16px 0 6px">${d.t}</h4><div class="chat">${d.lineas.map((x,i)=>
     `<div class="burb ${i%2?'b':''}"><div class="quien">${x[0]}</div><div class="h">${x[1]}</div><div class="p">${x[2]}</div><div class="e">${x[3]}</div>
-     <button class="oir" data-oir="${x[1]}">🔊 escuchar</button></div>`).join('')}</div>`).join('');
+     <button class="oir" data-oir="${x[1]}">${ICO_OIR} escuchar</button></div>`).join('')}</div>`).join('');
   return tabla+dlg;
 }
 
@@ -666,7 +702,12 @@ function empezarCola(cola,extra){
   cierraFicha(); $('camino').style.display='none'; $('leccion').style.display='flex'; window.scrollTo(0,0);
   siguiente();
 }
-$('salir').onclick=()=>{ if(L.estado==='fin' || confirm('¿Salir? Se pierde el avance de esta lección.')) volver(); };
+$('salir').onclick=()=>{
+  if(L.estado==='fin'){ volver(); return; }
+  pregunta({sello:'停', titulo: L.modo==='hoy'?'¿Dejar la práctica de hoy?':'¿Salir de la lección?',
+    texto:`Llevas ${L.hechos} de ${L.total}. Si sales, esta ${L.modo==='hoy'?'práctica':'lección'} empieza de nuevo (lo que ya respondiste sí cuenta para tus repasos).`,
+    si:'Salir', no:'Seguir'}).then(v=>{ if(v) volver(); });
+};
 function volver(){ L=null; $('leccion').style.display='none'; $('camino').style.display='block'; pinta(); window.scrollTo(0,0); }
 function avance(){ $('avance').style.width = Math.round(100*L.hechos/L.total)+'%'; }
 function setAbajo(clase,txt,html){ $('abajo').className='abajo '+(clase||''); $('fb').innerHTML=html||''; $('accion').textContent=txt; }
@@ -697,7 +738,7 @@ function pIntro(e){
     <div class="py">${c.py}</div><div class="es">${c.es}</div>
     <div class="partes"><span class="r">${c.rad}</span>${c.son?`<span>${c.son.split(' ')[0]}</span>`:''}</div>
     <p class="nota">Radical <b class="cjk">${c.rad}</b>: ${RADS[c.rad]||''}${c.son?` · suena parecido a <b class="cjk">${c.son}</b>`:''}</p>
-    <button class="oir" id="oir">🔊 escuchar</button></div>`;
+    <button class="oir" id="oir">${ICO_OIR} escuchar</button></div>`;
   $('oir').onclick=()=>habla(c.h); if(S.sonido) habla(c.h);
 }
 function pSignificado(e){
@@ -763,7 +804,7 @@ function pPalIntro(e){
     ${p.cat && p.cat!=='—' ? `<p class="sub">${p.cat}</p>` : ''}
     ${p.nota ? `<p class="nota">${p.nota}</p>` : ''}
     ${conocidos.length ? `<p class="nota">Ya lo viste en radicales: ${conocidos.map(c=>`<b class="cjk">${c}</b> ${C[c].py} · ${C[c].es}`).join(' — ')}</p>` : ''}
-    <button class="oir" id="oir">🔊 escuchar</button></div>`;
+    <button class="oir" id="oir">${ICO_OIR} escuchar</button></div>`;
   $('oir').onclick=()=>habla(p.p); if(S.sonido) habla(p.p);
 }
 function pPalSig(e){
@@ -835,7 +876,7 @@ function pDialogo(e){
   $('ej').innerHTML=`<span class="tag" style="display:inline-block;font-size:12px;font-weight:700;letter-spacing:.08em;color:var(--seal);border:1.5px solid var(--seal);padding:2px 8px;margin-bottom:6px">DIÁLOGO</span>
     <h3>¿Qué contesta ${x[0]}?</h3>
     <div class="chat">${prev.map(l=>`<div class="burb ${l[0]===x[0]?'b':''}"><div class="quien">${l[0]}</div><div class="h">${l[1]}</div><div class="p">${l[2]}</div>
-      <button class="oir" data-oir="${l[1]}">🔊 escuchar</button></div>`).join('')}
+      <button class="oir" data-oir="${l[1]}">${ICO_OIR} escuchar</button></div>`).join('')}
       <div class="burb b hueco"><div class="quien">${x[0]}</div>¿…?</div></div>
     <div class="opciones">${e.ops.map((o,i)=>`<button class="op frase" data-i="${i}">${o}</button>`).join('')}</div>`;
   document.querySelectorAll('[data-oir]').forEach(b=>b.onclick=()=>habla(b.dataset.oir));
@@ -985,7 +1026,7 @@ function abrePlana(ch){
       <div class="modos"><button data-m="ver">1 · Ver</button><button data-m="calcar">2 · Calcar</button><button data-m="memoria">3 · De memoria</button></div>
       <div id="lienzo"></div><div id="plana-msg"></div>
       <p class="nota" style="text-align:center" id="plana-cuenta"></p>
-      <div style="text-align:center"><button class="oir" id="plana-oir">🔊 escuchar</button></div>`;
+      <div style="text-align:center"><button class="oir" id="plana-oir">${ICO_OIR} escuchar</button></div>`;
     $('plana-oir').onclick=()=>habla(ch);
     document.querySelectorAll('.modos button').forEach(b=>b.onclick=()=>{ modoPlana=b.dataset.m; arrancaPlana(); });
     arrancaPlana();
@@ -1075,7 +1116,7 @@ function abreFicha(tipo,id){
     extra=[w.length?'Aparece en: '+w.join(', '):'', radDe(id)?`Radical ${radDe(id)}: ${RADS[radDe(id)]||''}`:''].filter(Boolean).join(' · '); }
   f.innerHTML=`<button class="cerrar" id="ficha-x">✕</button><div class="h">${id}</div><div class="p">${py}</div><div>${es}</div>
     ${extra?`<p class="nota">${extra}</p>`:''}
-    <div class="acciones">${tipo!=='r'?'<button id="ficha-oir">🔊 Escuchar</button>':''}${tipo!=='p'?'<button id="ficha-plana">写 Plana</button>':''}</div>`;
+    <div class="acciones">${tipo!=='r'?'<button id="ficha-oir">'+ICO_OIR+' Escuchar</button>':''}${tipo!=='p'?'<button id="ficha-plana">写 Plana</button>':''}</div>`;
   f.style.display='block';
   $('ficha-x').onclick=cierraFicha;
   if($('ficha-oir')) $('ficha-oir').onclick=()=>habla(id);
@@ -1090,7 +1131,9 @@ $('exportar').onclick=()=>{
   const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([JSON.stringify(data,null,2)],{type:'application/json'}));
   a.download='hanzi-progreso-'+hoy()+'.json'; a.click();
 };
-$('borrar').onclick=()=>{ if(confirm('¿Borrar todo tu progreso?')){ S=VACIO(); guardar(); pinta(); } };
+$('borrar').onclick=()=>pregunta({sello:'删', titulo:'¿Borrar todo tu progreso?',
+  texto:'Se borran lecciones, XP, racha, repasos y planas. No se puede deshacer. Si quieres, primero exporta tu progreso.',
+  si:'Borrar todo', no:'Cancelar', peligro:true}).then(v=>{ if(v){ const son=S.sonido, vib=S.vibra; S=VACIO(); S.sonido=son; S.vibra=vib; guardar(); pinta(); pintaAjustes(); } });
 pinta(); pintaAjustes();
 if('serviceWorker' in navigator && location.protocol.startsWith('http')) navigator.serviceWorker.register('sw.js').catch(e=>{});
 </script>
