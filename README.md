@@ -11,3 +11,4 @@ Apartados: 今 Hoy (repaso espaciado) · 课 Libro (lecciones) · 写 Planas (or
 - `hanzi-writer.min.js`: Hanzi Writer v3.7.3 — MIT License, (c) 2014 David Chanin.
 - `trazos.json`: datos de hanzi-writer-data, derivados de Make Me a Hanzi; fuentes de Arphic Technology,
   bajo la Arphic Public License.
+- `sonidos.json`: efectos de sonido de Kenney (www.kenney.nl), licencia CC0.

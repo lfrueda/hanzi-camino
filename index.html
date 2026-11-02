@@ -25,7 +25,10 @@
   #camino header{position:sticky;top:0;background:#e8e5dcf2;backdrop-filter:blur(4px);z-index:2;
     display:flex;justify-content:space-between;align-items:center;padding:12px 18px;border-bottom:1.5px solid var(--ink)}
   #camino header h1{margin:0;font-family:var(--kai);font-size:30px;font-weight:400;letter-spacing:4px}
-  .chips{display:flex;gap:16px;font-weight:700;font-size:15px}
+  .chips{display:flex;gap:16px;font-weight:700;font-size:15px;align-items:center}
+  .ajuste{font-size:19px;width:34px;height:34px;border:1.5px solid var(--line);border-radius:50%;display:inline-flex;align-items:center;justify-content:center;background:var(--sheet)}
+  .ajuste.off{opacity:.45}
+  .chips .ajustes{display:flex;gap:6px}
   .unidad{margin:24px 0 8px;background:var(--sheet);padding:16px 16px 14px 22px;border:1.5px solid var(--ink);position:relative}
   .unidad::before{content:"";position:absolute;left:10px;top:0;bottom:0;width:1.5px;background:var(--seal);opacity:.55}
   .unidad.locked{opacity:.5}
@@ -195,6 +198,7 @@
 </head>
 <body>
 <div id="error"></div>
+<input type="checkbox" switch id="haptico" aria-hidden="true" tabindex="-1" style="position:absolute;left:-9999px"><label for="haptico" id="haptico-l" style="position:absolute;left:-9999px">.</label>
 <script>
 // Muestra cualquier error en pantalla (sirve para depurar en el celular).
 function muestraError(m){ var e=document.getElementById('error'); e.style.display='block'; e.textContent+=(e.textContent?'\n':'')+'⚠ '+m+'  (toca para cerrar)'; e.onclick=function(){e.style.display='none';e.textContent='';}; }
@@ -205,7 +209,8 @@ window.addEventListener('unhandledrejection',function(ev){ muestraError(String(e
 <section id="camino">
   <header>
     <h1>汉字</h1>
-    <div class="chips"><span>Racha <b id="racha">0</b></span><span>XP <b id="xp">0</b></span></div>
+    <div class="chips"><span>Racha <b id="racha">0</b></span><span>XP <b id="xp">0</b></span>
+      <span class="ajustes"><button class="ajuste" data-ajuste="sonido" aria-label="sonido">🔊</button><button class="ajuste" data-ajuste="vibra" aria-label="vibración">📳</button></span></div>
   </header>
   <div class="vista wrap" id="v-hoy"></div>
   <div class="vista" id="v-libro">
@@ -229,7 +234,7 @@ window.addEventListener('unhandledrejection',function(ev){ muestraError(String(e
 </section>
 
 <section id="leccion">
-  <div class="top wrap" style="width:100%"><button class="x" id="salir">✕</button><div class="barra"><i id="avance"></i></div></div>
+  <div class="top wrap" style="width:100%"><button class="x" id="salir">✕</button><div class="barra"><i id="avance"></i></div><button class="ajuste" data-ajuste="sonido" aria-label="sonido">🔊</button></div>
   <div class="ej wrap" id="ej" style="width:100%"></div>
   <div class="abajo" id="abajo"><div class="in">
     <div class="fb" id="fb"></div>
@@ -445,7 +450,7 @@ const NOMBRES=['Parte 1','Parte 2','Repaso de la unidad'];
 const KEY='hanzi-camino-v1';
 // srs: repetición espaciada. Clave 'p:<palabra>' o 'h:<hanzi>' → {iv: días, due: 'AAAA-MM-DD', n: aciertos, f: fallos}
 // planas: hanzi → veces escrito de memoria.
-const VACIO=()=>({hechas:{}, xp:0, racha:0, ultimoDia:null, aciertos:{}, fallos:{}, srs:{}, planas:{}});
+const VACIO=()=>({hechas:{}, xp:0, racha:0, ultimoDia:null, aciertos:{}, fallos:{}, srs:{}, planas:{}, sonido:true, vibra:true});
 let S = (()=>{ try{ return Object.assign(VACIO(), JSON.parse(localStorage.getItem(KEY))||{}) }catch(e){ return VACIO() } })();
 const guardar=()=>{ try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){} };
 const fecha=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
@@ -473,6 +478,45 @@ const nivel=clave=>{ const r=S.srs[clave]; return !r ? 0 : r.iv>=21 ? 3 : r.iv>=
 const vencidas=()=>Object.entries(S.srs).filter(([k,r])=>r.due<=hoy() && (k.startsWith('p:')?P[k.slice(2)]:C[k.slice(2)]))
                                         .sort((a,b)=>a[1].due<b[1].due?-1:1).map(([k])=>k);
 const palabrasLibro=()=>UNIDADES.filter(u=>u.libro).flatMap(u=>u.pal);
+
+// ---------- efectos de sonido y vibración ----------
+// Sonidos: Kenney (CC0), madera y teclado mecánico. Se tocan con Web Audio; el tono se cambia con la velocidad.
+const EFECTOS={
+  tap:  [['click3',0,1,1]],
+  sello:[['footstep05',0,.85,1]],
+  ok:   [['impactWood_light_000',0,1.2,1],['impactWood_light_000',.09,1.6,1]],
+  mal:  [['switch28',0,.8,1],['click4',.08,.7,1]],
+  fin:  [[0,1],[.1,1.26],[.2,1.498],[.3,2]].map(([t,r])=>['impactWood_light_000',t,r,1]).concat([['impactWood_heavy_000',.45,1.2,1]]),
+};
+let AC=null, BUF={}, cargandoSon=null;
+function audio(){ try{ if(!AC) AC=new (window.AudioContext||window.webkitAudioContext)(); if(AC.state==='suspended') AC.resume(); }catch(e){ AC=null; } return AC; }
+function cargaSonidos(){
+  if(cargandoSon) return cargandoSon;
+  return cargandoSon=fetch('sonidos.json').then(r=>r.json()).then(j=>Promise.all(Object.entries(j).map(([k,b64])=>{
+    const bin=atob(b64), u=new Uint8Array(bin.length); for(let i=0;i<bin.length;i++) u[i]=bin.charCodeAt(i);
+    return new Promise(ok=>audio().decodeAudioData(u.buffer,b=>{ BUF[k]=b; ok(); },()=>ok()));
+  }))).catch(()=>{ cargandoSon=null; });
+}
+function efecto(nombre, retraso){
+  if(!S.sonido) return;
+  const c=audio(); if(!c) return;
+  if(!Object.keys(BUF).length){ cargaSonidos(); return; }
+  const t0=c.currentTime+.01+(retraso||0);
+  for(const [n,t,r,v] of EFECTOS[nombre]){ if(!BUF[n]) continue;
+    const s=c.createBufferSource(), g=c.createGain(); s.buffer=BUF[n]; s.playbackRate.value=r; g.gain.value=v; s.connect(g).connect(c.destination); s.start(t0+t); }
+}
+function vibra(n){
+  if(!S.vibra) return;
+  try{ if(navigator.vibrate){ navigator.vibrate(n===1?25:[25,70,25]); return; }
+    const l=document.getElementById('haptico-l'); l.click(); if(n>1) setTimeout(()=>l.click(),110); }catch(e){}
+}
+function pintaAjustes(){ document.querySelectorAll('[data-ajuste]').forEach(b=>{ const k=b.dataset.ajuste;
+  b.classList.toggle('off',!S[k]); b.textContent = k==='sonido' ? (S.sonido?'🔊':'🔇') : '📳'; }); }
+document.querySelectorAll('[data-ajuste]').forEach(b=>b.onclick=()=>{ const k=b.dataset.ajuste; S[k]=!S[k]; guardar(); pintaAjustes();
+  if(k==='sonido' && S.sonido){ cargaSonidos().then(()=>efecto('tap')); } if(k==='vibra') vibra(1); });
+// el iPhone solo deja sonar audio después de un toque: se prepara en el primer toque
+document.addEventListener('touchstart',function prep(){ audio(); cargaSonidos(); document.removeEventListener('touchstart',prep); },{passive:true});
+document.addEventListener('mousedown',function prep(){ audio(); cargaSonidos(); document.removeEventListener('mousedown',prep); });
 
 // ================== APARTADOS ==================
 let vista='hoy';
@@ -643,7 +687,7 @@ function activaOpciones(){
   document.querySelectorAll('.op').forEach(b=>b.onclick=()=>{
     if(L.estado!=='pregunta') return;
     document.querySelectorAll('.op').forEach(x=>x.classList.remove('sel')); b.classList.add('sel');
-    L.sel=+b.dataset.i; $('accion').disabled=false;
+    L.sel=+b.dataset.i; $('accion').disabled=false; efecto('tap');
   });
 }
 
@@ -654,7 +698,7 @@ function pIntro(e){
     <div class="partes"><span class="r">${c.rad}</span>${c.son?`<span>${c.son.split(' ')[0]}</span>`:''}</div>
     <p class="nota">Radical <b class="cjk">${c.rad}</b>: ${RADS[c.rad]||''}${c.son?` · suena parecido a <b class="cjk">${c.son}</b>`:''}</p>
     <button class="oir" id="oir">🔊 escuchar</button></div>`;
-  $('oir').onclick=()=>habla(c.h); habla(c.h);
+  $('oir').onclick=()=>habla(c.h); if(S.sonido) habla(c.h);
 }
 function pSignificado(e){
   const c=C[e.hz];
@@ -695,7 +739,7 @@ function pFrase(e){
     $('ej').innerHTML=`<h3>Traduce</h3><p style="font-size:20px;margin:0 0 10px">“${es}”</p>
       <div class="linea">${e.orden.map((i,k)=>`<button class="ficha" data-k="${k}">${e.fichas[i].t}</button>`).join('')}</div>
       <div class="fichas">${e.fichas.map((f,i)=>`<button class="ficha ${f.usada?'hueco':''}" data-i="${i}">${f.t}</button>`).join('')}</div>`;
-    document.querySelectorAll('.fichas .ficha').forEach(b=>b.onclick=()=>{ if(L.estado!=='pregunta')return; const i=+b.dataset.i; if(e.fichas[i].usada)return; e.fichas[i].usada=true; e.orden.push(i); pinta(); });
+    document.querySelectorAll('.fichas .ficha').forEach(b=>b.onclick=()=>{ if(L.estado!=='pregunta')return; const i=+b.dataset.i; if(e.fichas[i].usada)return; e.fichas[i].usada=true; e.orden.push(i); efecto('tap'); pinta(); });
     document.querySelectorAll('.linea .ficha').forEach(b=>b.onclick=()=>{ if(L.estado!=='pregunta')return; const k=+b.dataset.k; e.fichas[e.orden[k]].usada=false; e.orden.splice(k,1); pinta(); });
     $('accion').disabled = e.orden.length===0;
   };
@@ -720,7 +764,7 @@ function pPalIntro(e){
     ${p.nota ? `<p class="nota">${p.nota}</p>` : ''}
     ${conocidos.length ? `<p class="nota">Ya lo viste en radicales: ${conocidos.map(c=>`<b class="cjk">${c}</b> ${C[c].py} · ${C[c].es}`).join(' — ')}</p>` : ''}
     <button class="oir" id="oir">🔊 escuchar</button></div>`;
-  $('oir').onclick=()=>habla(p.p); habla(p.p);
+  $('oir').onclick=()=>habla(p.p); if(S.sonido) habla(p.p);
 }
 function pPalSig(e){
   const p=P[e.w];
@@ -825,7 +869,7 @@ function normaliza(x){
   return {base:s, tono};
 }
 
-function sellar(ch){ const m=document.querySelector('#ej .palabra') || document.querySelector('#ej .mizi'); if(m) m.insertAdjacentHTML('beforeend',`<i class="sello ${ch==='错'?'mal':''}">${ch}</i>`); }
+function sellar(ch){ efecto('sello'); efecto(ch==='错'?'mal':'ok',.12); vibra(ch==='错'?2:1); const m=document.querySelector('#ej .palabra') || document.querySelector('#ej .mizi'); if(m) m.insertAdjacentHTML('beforeend',`<i class="sello ${ch==='错'?'mal':''}">${ch}</i>`); }
 // ---------- comprobar ----------
 $('accion').onclick=()=>{
   const e=L.actual;
@@ -837,7 +881,7 @@ $('accion').onclick=()=>{
   if(e.tipo==='dialogo'){
     ok = L.sel===e.correcta; const x=e.d.lineas[e.i];
     document.querySelectorAll('.op').forEach((b,i)=>{ if(i===e.correcta) b.classList.add('ok'); else if(i===L.sel) b.classList.add('bad'); });
-    sol=x[1]; extra=`${x[2]} · ${x[3]}`; habla(x[1]);
+    sol=x[1]; extra=`${x[2]} · ${x[3]}`; if(S.sonido) habla(x[1]);
   }else if(['pal-sig','pal-elige','pal-tono'].includes(e.tipo)){
     ok = L.sel===e.correcta;
     document.querySelectorAll('.op').forEach((b,i)=>{ if(i===e.correcta) b.classList.add('ok'); else if(i===L.sel) b.classList.add('bad'); });
@@ -892,7 +936,7 @@ function fin(){
     <p style="color:var(--muted)">${L.titulo}</p>
     <div class="stats"><div><b>+${xp}</b>XP</div><div><b>${S.racha}</b>días de racha</div><div><b>${L.errados.size}</b>corregidos</div></div>
     ${L.errados.size?'<p style="color:var(--muted)">Lo que fallaste te volvió a salir hasta que lo sacaste, y te lo vuelvo a preguntar pronto en 今 Hoy.</p>':'<p style="color:var(--jade)">Sin errores.</p>'}</div>`;
-  setAbajo('', 'Continuar'); $('accion').disabled=false; L.estado='fin';
+  setAbajo('', 'Continuar'); $('accion').disabled=false; L.estado='fin'; efecto('fin',.15);
 }
 
 // ================== 写 PLANAS ==================
@@ -962,6 +1006,7 @@ function arrancaPlana(msg){
   W.quiz({ onComplete:r=>{
     if(modoPlana==='memoria'){ S.planas[ch]=(S.planas[ch]||0)+1;
       if(S.ultimoDia!==hoy()){ S.racha=(S.ultimoDia===ayer())?S.racha+1:1; S.ultimoDia=hoy(); } guardar(); }
+    efecto('ok'); vibra(1);
     const m = r.totalMistakes ? `对 · con ${r.totalMistakes} error${r.totalMistakes>1?'es':''}. Otra vez:` : '对 ¡perfecto! Otra vez:';
     $('plana-msg').textContent=m; $('plana-msg').style.color='var(--jade)'; $('plana-cuenta').textContent=contadorPlana(ch);
     setTimeout(()=>{ if(planaCh===ch) arrancaPlana(m); },1300);
@@ -1046,7 +1091,7 @@ $('exportar').onclick=()=>{
   a.download='hanzi-progreso-'+hoy()+'.json'; a.click();
 };
 $('borrar').onclick=()=>{ if(confirm('¿Borrar todo tu progreso?')){ S=VACIO(); guardar(); pinta(); } };
-pinta();
+pinta(); pintaAjustes();
 if('serviceWorker' in navigator && location.protocol.startsWith('http')) navigator.serviceWorker.register('sw.js').catch(e=>{});
 </script>
 </body>
