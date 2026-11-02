@@ -118,11 +118,23 @@
   .partes span.r{border-color:var(--seal);color:var(--seal)}
   .nota{color:var(--ink2);font-size:14px;margin:8px 0 0;line-height:1.45}
   .abajo{position:fixed;left:0;right:0;bottom:0;padding:16px 18px;border-top:1.5px solid var(--ink);background:var(--paper)}
-  .abajo.ok{background:#dfe8de} .abajo.bad{background:#dcd6ca}
+  .abajo{transition:background .2s}
+  .abajo.ok{background:#dfe8de;border-top-color:var(--jade)} .abajo.bad{background:#dcd6ca}
+  .abajo.ok,.abajo.bad{animation:panelSube .34s cubic-bezier(.2,.9,.25,1.15)}
+  .abajo.ok .fb,.abajo.bad .fb{animation:fbEntra .3s .06s ease-out both}
+  .fb{display:none;align-items:center;gap:12px}
+  .fb .mini{flex:none;width:40px;height:40px;border-radius:5px;display:flex;align-items:center;justify-content:center;font-family:var(--kai);
+    font-size:24px;font-weight:400;color:#f6e9e4;transform:rotate(-8deg);animation:miniSello .3s .1s ease-out both}
+  .abajo.ok .fb .mini{background:var(--jade);box-shadow:inset 0 0 0 2.5px var(--jade),inset 0 0 0 4px #eef5ef}
+  .abajo.bad .fb .mini{background:var(--ink2);box-shadow:inset 0 0 0 2.5px var(--ink2),inset 0 0 0 4px #e8e5dc}
+  .fb .txt{flex:1;min-width:0}
+  @keyframes panelSube{from{transform:translateY(64px)}to{transform:none}}
+  @keyframes fbEntra{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+  @keyframes miniSello{from{opacity:0;transform:rotate(-8deg) scale(1.8)}to{opacity:1;transform:rotate(-8deg) scale(1)}}
   .abajo .in{max-width:560px;margin:0 auto}
   .fb{font-weight:700;font-size:18px;margin-bottom:10px;display:none}
   .fb small{display:block;font-weight:400;font-size:15px;margin-top:3px;color:var(--ink2)}
-  .abajo.ok .fb{display:block;color:var(--jade)} .abajo.bad .fb{display:block;color:var(--ink)}
+  .abajo.ok .fb{display:flex;color:var(--jade)} .abajo.bad .fb{display:flex;color:var(--ink)}
   .btn{width:100%;padding:15px;font-weight:800;font-size:15px;background:var(--ink);color:var(--sheet);letter-spacing:.14em}
   .btn:disabled{background:var(--line);color:var(--muted)}
   .abajo.ok .btn{background:var(--jade)}
@@ -135,8 +147,22 @@
   .palabra .mizi>span{font-size:calc(var(--s)*.8)}
   .pron .op{font-size:21px}
   .op.pal:not(.sel):not(.ok):not(.bad){background:var(--sheet)}
-  .fin{text-align:center;padding-top:40px}
-  .fin .mizi{width:150px;height:150px} .fin .mizi>span{font-size:110px;color:var(--seal)}
+  .fin{text-align:center;padding-top:34px}
+  .fin .gran{width:132px;height:132px;margin:6px auto 18px;border-radius:10px;background:var(--seal);color:#f6e9e4;font-family:var(--kai);font-size:96px;
+    line-height:1;display:flex;align-items:center;justify-content:center;transform:rotate(-8deg);
+    box-shadow:inset 0 0 0 5px var(--seal),inset 0 0 0 8px #f6e9e4;animation:granSello .6s cubic-bezier(.3,0,.4,1) both}
+  .fin .gran.hoy{background:var(--ink);box-shadow:inset 0 0 0 5px var(--ink),inset 0 0 0 8px #f3f1ea}
+  .fin.impacto{animation:tiembla .28s .55s ease-out}
+  .fin h2,.fin .sub2,.fin .stats,.fin .lista,.fin .msg{animation:fbEntra .4s ease-out both}
+  .fin h2{animation-delay:.65s} .fin .sub2{animation-delay:.72s;color:var(--muted)} .fin .stats{animation-delay:.8s} .fin .msg{animation-delay:.9s} .fin .lista{animation-delay:1s}
+  .fin .lista{text-align:left;background:var(--sheet);border:1.5px solid var(--ink);padding:12px 14px;margin-top:6px}
+  .fin .lista h4{margin:0 0 6px;font-size:14px}
+  .fin .lista div{display:flex;gap:10px;align-items:baseline;padding:5px 0;border-bottom:1px solid var(--line);font-size:14px}
+  .fin .lista div:last-child{border-bottom:0}
+  .fin .lista b{font-family:var(--kai);font-weight:400;font-size:22px;min-width:52px} .fin .lista i{font-style:normal;color:var(--seal)}
+  @keyframes granSello{0%{opacity:0;transform:rotate(-24deg) scale(2.6)}70%{opacity:1;transform:rotate(-6deg) scale(.9)}100%{opacity:1;transform:rotate(-8deg) scale(1)}}
+  @keyframes tiembla{0%,100%{transform:none}25%{transform:translate(-3px,2px)}50%{transform:translate(3px,-1px)}75%{transform:translate(-1px,1px)}}
+  @media (prefers-reduced-motion:reduce){.fin .gran,.fin.impacto,.fin h2,.fin .sub2,.fin .stats,.fin .lista,.fin .msg,.abajo.ok,.abajo.bad,.fb,.fb .mini{animation:none!important}}
   .fin .stats{display:flex;gap:10px;justify-content:center;margin:20px 0}
   .fin .stats div{background:var(--sheet);border:1.5px solid var(--ink);padding:10px 14px;min-width:92px;font-size:13px;color:var(--ink2)}
   .fin .stats b{display:block;font-size:24px;color:var(--ink)}
@@ -956,16 +982,37 @@ $('accion').onclick=()=>{
     L.hechos++; if(!L.errados.has(e)) L.xpGanado++;
     S.aciertos[clave]=(S.aciertos[clave]||0)+1;
     sellar('对');
-    setAbajo('ok','Continuar',`对，¡bien! <small>${extra}</small>`);
+    setAbajo('ok','Continuar',`<span class="mini">对</span><span class="txt">${frasesBien[Math.floor(Math.random()*frasesBien.length)]} <small>${extra}</small></span>`);
   }else{
     L.errados.add(e); L.cola.push(e);   // vuelve al final hasta que salga bien
     S.fallos[clave]=(S.fallos[clave]||0)+1;
     sellar('错');
-    setAbajo('bad','Entendido',`Era: <span class="cjk">${sol}</span><small>${extra}</small>`);
+    setAbajo('bad','Entendido',`<span class="mini">错</span><span class="txt">Era: <span class="${/[㐀-鿿]/.test(sol)?'cjk':''}">${sol}</span><small>${extra}</small></span>`);
   }
   $('accion').disabled=false; guardar(); avance();
 };
 
+// lo que falló en la sesión, sin repetir
+function listaFallos(){
+  const vistos=new Set(), out=[];
+  for(const e of L.errados){
+    let f=null;
+    if(e.w){ const p=P[e.w]; f={k:'p'+e.w,h:p.p,py:p.py,es:p.es}; }
+    else if(e.hz){ const c=C[e.hz]; f={k:'h'+e.hz,h:c.h,py:c.py,es:c.es}; }
+    else if(e.tipo==='par'){ const c=C[e.p.h]; f={k:'r'+e.p.h,h:c.h,py:'lleva '+e.p.a,es:e.p.por}; }
+    else if(e.tipo==='frase'){ f={k:'f'+e.f[0],h:e.f[0],py:'',es:e.f[1]}; }
+    else if(e.tipo==='dialogo'){ const x=e.d.lineas[e.i]; f={k:'d'+x[1],h:x[1],py:x[2],es:x[3]}; }
+    if(f && !vistos.has(f.k)){ vistos.add(f.k); out.push(f); }
+  }
+  return out;
+}
+function cuenta(el,hasta,pre){
+  if(matchMedia('(prefers-reduced-motion: reduce)').matches || hasta<=0){ el.textContent=pre+hasta; return; }
+  const t0=performance.now(), dur=600;
+  const paso=now=>{ const k=Math.min(1,(now-t0)/dur); el.textContent=pre+Math.round(hasta*(1-Math.pow(1-k,3))); if(k<1) requestAnimationFrame(paso); };
+  requestAnimationFrame(paso);
+}
+const frasesBien=['¡Bien!','¡Eso!','¡Correcto!','¡Muy bien!','¡Así es!'];
 function fin(){
   const xp=10+L.xpGanado;
   S.xp+=xp;
@@ -973,11 +1020,16 @@ function fin(){
   if(S.ultimoDia!==hoy()){ S.racha = (S.ultimoDia===ayer()) ? S.racha+1 : 1; S.ultimoDia=hoy(); }
   guardar();
   $('avance').style.width='100%';
-  $('ej').innerHTML=`<div class="fin"><div class="mizi"><span>完</span></div><h2>${L.modo==='hoy'?'Práctica terminada':'Lección completa'}</h2>
-    <p style="color:var(--muted)">${L.titulo}</p>
-    <div class="stats"><div><b>+${xp}</b>XP</div><div><b>${S.racha}</b>días de racha</div><div><b>${L.errados.size}</b>corregidos</div></div>
-    ${L.errados.size?'<p style="color:var(--muted)">Lo que fallaste te volvió a salir hasta que lo sacaste, y te lo vuelvo a preguntar pronto en 今 Hoy.</p>':'<p style="color:var(--jade)">Sin errores.</p>'}</div>`;
-  setAbajo('', 'Continuar'); $('accion').disabled=false; L.estado='fin'; efecto('fin',.15);
+  const fallos=listaFallos(), perfecta=!L.errados.size;
+  $('ej').innerHTML=`<div class="fin impacto"><div class="gran ${L.modo==='hoy'?'hoy':''}">${L.modo==='hoy'?'今':'完'}</div>
+    <h2>${L.modo==='hoy'?'Práctica terminada':perfecta?'¡Lección perfecta!':'Lección completa'}</h2>
+    <p class="sub2">${L.titulo}</p>
+    <div class="stats"><div><b data-cuenta="${xp}" data-pre="+">+0</b>XP</div><div><b data-cuenta="${S.racha}">0</b>días de racha</div><div><b data-cuenta="${L.xpGanado}">0</b>a la primera</div></div>
+    ${perfecta?'<p class="msg" style="color:var(--jade)">Sin un solo error. 好！</p>'
+      :`<div class="lista"><h4>Para repasar (te las vuelvo a preguntar pronto en 今 Hoy)</h4>${fallos.map(f=>`<div><b>${f.h}</b><span><i>${f.py}</i> ${f.es}</span></div>`).join('')}</div>`}</div>`;
+  setAbajo('', 'Continuar'); $('accion').disabled=false; L.estado='fin';
+  efecto('fin',.15); setTimeout(()=>vibra(2),550);
+  setTimeout(()=>document.querySelectorAll('[data-cuenta]').forEach(b=>cuenta(b,+b.dataset.cuenta,b.dataset.pre||'')),800);
 }
 
 // ================== 写 PLANAS ==================
