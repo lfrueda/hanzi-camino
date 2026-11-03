@@ -56,6 +56,32 @@
   .letrero-parte .suma .h{margin:0 2px}
   .letrero-parte .r{font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;margin-top:2px}
   .letrero-parte .puntos{display:flex;gap:5px;justify-content:center;margin-top:5px} .letrero-parte .puntos i{width:7px;height:7px;border-radius:50%;background:#cfc9bb}
+  /* 印谱 álbum de sellos */
+  .chip-indice{display:inline-flex;align-items:center;gap:5px;font:inherit;font-weight:700;color:var(--seal);background:none;border:0;padding:0;cursor:pointer}
+  .chip-indice .mini{display:inline-block;width:22px;height:22px} .chip-indice .mini svg{width:100%;height:100%;display:block}
+  .estampa{width:140px;height:140px;margin:4px auto 2px} .estampa svg{width:100%;height:100%;animation:estampa .55s cubic-bezier(.2,1.6,.4,1) both .35s}
+  @keyframes estampa{from{transform:scale(2.2) rotate(-14deg);opacity:0}to{transform:none;opacity:1}}
+  .nuevo-sello{font-size:15px;color:var(--ink2);margin:6px 0 4px} .nuevo-sello b{color:var(--seal);font-weight:400} .nuevo-sello .cjk{font-size:19px}
+  .logro-nuevo{display:flex;align-items:center;gap:10px;max-width:330px;margin:10px auto 0;padding:8px 12px;border:1.5px dashed var(--oro,#b0731f);background:#f6efe1;font-size:14px;color:var(--ink2);text-align:left}
+  .logro-nuevo svg{width:46px;height:46px;flex:none} .logro-nuevo b{color:#b0731f}
+  .album-hoja{position:fixed;inset:0;z-index:60;overflow-y:auto;background:var(--paper);padding:12px 16px 40px}
+  body.con-album{overflow:hidden}
+  .album-hoja h2{font-family:var(--kai);font-weight:400;font-size:34px;margin:0;text-align:center}
+  .ap-cabeza{display:flex;justify-content:flex-end} .ap-cerrar{font:inherit;font-size:22px;background:none;border:0;color:var(--ink2);padding:4px 8px;cursor:pointer}
+  .ap-sub{text-align:center;color:var(--muted);font-size:13px;margin:2px 0 10px}
+  .ap-seccion{font-size:13px;font-weight:700;color:var(--ink2);margin:16px 2px 8px;display:flex;justify-content:space-between} .ap-seccion span{font-weight:400;color:var(--muted)}
+  .ap-rejilla{display:grid;grid-template-columns:repeat(4,1fr);gap:8px} .ap-rejilla.logros{grid-template-columns:repeat(3,1fr)}
+  .ap-hueco{aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;background:var(--sheet);border:1px solid var(--line);position:relative;padding:4px 2px;font:inherit;cursor:pointer}
+  .ap-hueco svg{width:66%;height:auto;flex:none} .ap-hueco .pie{font-size:9px;color:var(--muted);text-align:center;margin-top:2px;line-height:1}
+  .ap-hueco.vacio{background:transparent;border:1.5px dashed var(--line);cursor:default;padding:4px 2px} .ap-hueco .pie-vacio{font-size:10px;color:#b3ad9f}
+  .ap-hueco.vacio i{font-style:normal;color:#cfc9bb}
+  .ap-rejilla.logros .ap-hueco{aspect-ratio:auto;gap:4px;padding:8px 4px} .ap-rejilla.logros .ap-hueco svg{width:60px}
+  .ap-rejilla.logros .ap-hueco b{font-size:11px;color:var(--ink2);line-height:1.2;text-align:center} .ap-rejilla.logros .vacio b{color:var(--muted);font-weight:400} .ap-rejilla.logros .vacio i{font-family:inherit;font-size:26px}
+  .ap-detalle{position:fixed;inset:0;z-index:61;background:#1d1b1866;display:flex;align-items:center;justify-content:center;padding:20px}
+  .ap-detalle[hidden]{display:none}
+  .ap-detalle .caja{background:var(--sheet);border:1.5px solid var(--ink);padding:18px 20px;text-align:center;min-width:240px;max-width:320px}
+  .ap-detalle svg{width:130px;height:130px} .ap-detalle .py{color:var(--seal);font-size:22px;margin-top:6px} .ap-detalle .es{font-size:17px;margin-top:2px}
+  .ap-detalle .de{font-size:13px;color:var(--muted);margin-top:8px} .ap-detalle .toca{font-size:12px;color:var(--muted);margin:10px 0 0}
   .botones-intro{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}   /* un grupo de hanzi no se parte entre renglones */
   .ico{display:inline-block;width:1.1em;height:1.1em;vertical-align:-.18em}
   .oir{gap:7px}
@@ -290,7 +316,7 @@ window.addEventListener('unhandledrejection',function(ev){ muestraError(String(e
 <section id="camino">
   <header>
     <h1>汉字</h1>
-    <div class="chips"><span>Racha <b id="racha">0</b></span><span>XP <b id="xp">0</b></span>
+    <div class="chips"><span>Racha <b id="racha">0</b></span><button class="chip-indice" id="ver-album" aria-label="Álbum de sellos"><span class="mini" id="mini-sello"></span><b id="nsellos">0</b></button>
       <span class="ajustes"><button class="ajuste" data-ajuste="sonido" aria-label="sonido">声</button><button class="ajuste" data-ajuste="vibra" aria-label="vibración">振</button></span></div>
   </header>
   <div class="vista wrap" id="v-hoy"></div>
@@ -480,7 +506,7 @@ const KEY='hanzi-camino-v1';
 // planas: hanzi → veces escrito de memoria.
 // errores: banco de errores. Clave 'p:'/'h:' (palabra/hanzi), 'r:' (par de radicales), 'f:' (frase), 'd:' (línea de diálogo)
 //          → {f: veces fallado, ok: aciertos seguidos (en días distintos), dia: último día que contó, fallo: último día que lo fallaste}
-const VACIO=()=>({hechas:{}, xp:0, racha:0, ultimoDia:null, aciertos:{}, fallos:{}, srs:{}, planas:{}, errores:{}, sonido:true, vibra:true});
+const VACIO=()=>({hechas:{}, sellos:{}, logros:{}, xp:0, racha:0, ultimoDia:null, aciertos:{}, fallos:{}, srs:{}, planas:{}, errores:{}, sonido:true, vibra:true});
 let S = (()=>{ try{ return Object.assign(VACIO(), JSON.parse(localStorage.getItem(KEY))||{}) }catch(e){ return VACIO() } })();
 const guardar=()=>{ try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){} };
 const fecha=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
@@ -627,7 +653,8 @@ let vista='hoy';
 document.querySelectorAll('#tabs button').forEach(b=>b.onclick=()=>{ vista=b.dataset.v; cierraFicha(); pinta(); window.scrollTo(0,0); });
 function pinta(){
   const racha = (S.ultimoDia===hoy()||S.ultimoDia===ayer()) ? S.racha : 0;
-  $('racha').textContent=racha; $('xp').textContent=S.xp;
+  $('racha').textContent=racha; $('nsellos').textContent=nSellos();
+  if(!$('mini-sello').firstChild) $('mini-sello').innerHTML=sello('印','chip',{forma:'cuadro',blanco:true});
   document.querySelectorAll('#tabs button').forEach(b=>b.classList.toggle('on',b.dataset.v===vista));
   document.querySelectorAll('.vista').forEach(v=>v.classList.toggle('on',v.id==='v-'+vista));
   ({hoy:pintaHoy, libro:pintaCamino, planas:pintaPlanas, arbol:pintaArbol})[vista]();
@@ -1196,22 +1223,27 @@ function cuenta(el,hasta,pre){
 }
 const frasesBien=['¡Bien!','¡Eso!','¡Correcto!','¡Muy bien!','¡Así es!'];
 function fin(){
-  const xp=10+L.xpGanado;
-  S.xp+=xp;
   if(L.modo==='leccion'){ const id=idL(L.ui,L.l); S.hechas[id]=S.hechas[id]||new Date().toISOString(); }
   if(S.ultimoDia!==hoy()){ S.racha = (S.ultimoDia===ayer()) ? S.racha+1 : 1; S.ultimoDia=hoy(); }
+  // 印谱: sello nuevo por la lección (solo la primera vez) y logros ganados
+  const nuevo = L.modo==='leccion' ? selloDeLeccion(L.ui,L.l) : null;
+  const logros = revisaLogros({perfecta: L.modo==='leccion' && !L.errados.size, vacioBanco: L.graduados.length>0});
   guardar();
   $('avance').style.width='100%';
   const fallos=listaFallos(), perfecta=!L.errados.size;
   $('ej').innerHTML=`<div class="fin impacto"><div class="gran ${L.modo==='hoy'?'hoy':''}">${L.modo==='hoy'?'今':'完'}</div>
     <h2>${L.modo==='hoy'?'Práctica terminada':perfecta?'¡Lección perfecta!':'Lección completa'}</h2>
     <p class="sub2">${L.titulo}</p>
-    <div class="stats"><div><b data-cuenta="${xp}" data-pre="+">+0</b>XP</div><div><b data-cuenta="${S.racha}">0</b>días de racha</div><div><b data-cuenta="${L.xpGanado}">0</b>a la primera</div></div>
+    ${nuevo ? `<div class="estampa">${selloLeccion(idL(L.ui,L.l),nuevo.h)}</div>
+      <p class="nuevo-sello">Nuevo sello para tu <b class="cjk">印谱</b>: <span class="cjk">${nuevo.h}</span> ${infoHanzi(nuevo.h)[0]} · ${infoHanzi(nuevo.h)[1]}</p>` : ''}
+    ${logros.map(g=>`<div class="logro-nuevo">${selloLogro(g)}<div><b>¡Logro!</b> ${g.n}. Sello raro para tu álbum.</div></div>`).join('')}
+    <div class="stats"><div><b data-cuenta="${S.racha}">0</b>días de racha</div><div><b data-cuenta="${L.xpGanado}">0</b>a la primera</div></div>
     ${L.graduados.length?`<p class="msg" style="color:var(--jade)">Salieron del banco de errores: <span class="cjk">${L.graduados.map(textoClave).join(' · ')}</span> 好！</p>`:''}
     ${perfecta?'<p class="msg" style="color:var(--jade)">Sin un solo error. 好！</p>'
       :`<div class="lista"><h4>Al banco de errores (te saldrán en 今 Hoy hasta que las aciertes ${SALIR_BANCO} días distintos)</h4>${fallos.map(f=>`<div><b>${f.h}</b><span><i>${f.py}</i> ${f.es}</span></div>`).join('')}</div>`}</div>`;
   setAbajo('', 'Continuar'); $('accion').disabled=false; L.estado='fin';
   efecto('fin',.15); setTimeout(()=>vibra(2),550);
+  if(nuevo || logros.length) setTimeout(()=>efecto('sello'),700);
   setTimeout(()=>document.querySelectorAll('[data-cuenta]').forEach(b=>cuenta(b,+b.dataset.cuenta,b.dataset.pre||'')),800);
 }
 
@@ -1281,9 +1313,11 @@ function arrancaPlana(msg){
   if(modoPlana==='ver'){ W.loopCharacterAnimation(); return; }
   W.quiz({ onComplete:r=>{
     if(modoPlana==='memoria'){ S.planas[ch]=(S.planas[ch]||0)+1;
-      if(S.ultimoDia!==hoy()){ S.racha=(S.ultimoDia===ayer())?S.racha+1:1; S.ultimoDia=hoy(); } guardar(); }
+      if(S.ultimoDia!==hoy()){ S.racha=(S.ultimoDia===ayer())?S.racha+1:1; S.ultimoDia=hoy(); } }
+    const logrosP = modoPlana==='memoria' ? revisaLogros() : []; guardar();
     efecto('ok'); vibra(1);
-    const m = r.totalMistakes ? `对 · con ${r.totalMistakes} error${r.totalMistakes>1?'es':''}. Otra vez:` : '对 ¡perfecto! Otra vez:';
+    const m = (r.totalMistakes ? `对 · con ${r.totalMistakes} error${r.totalMistakes>1?'es':''}. Otra vez:` : '对 ¡perfecto! Otra vez:')
+      + (logrosP.length ? ` · ¡Logro: ${logrosP.map(g=>g.n).join(', ')}! Míralo en tu 印谱.` : '');
     $('plana-msg').textContent=m; $('plana-msg').style.color='var(--jade)'; $('plana-cuenta').textContent=contadorPlana(ch);
     setTimeout(()=>{ if(planaCh===ch) arrancaPlana(m); },1300);
   }});
@@ -1359,15 +1393,126 @@ function abreFicha(tipo,id){
 }
 function cierraFicha(){ const f=document.getElementById('ficha'); if(f) f.style.display='none'; }
 
+// ================== 印谱 ÁLBUM DE SELLOS (reemplaza al XP, 2026-11-02) ==================
+// S.sellos: id de lección ('u-l') → {h: hanzi del sello, f: fecha}. S.logros: clave → fecha.
+// Cada lección terminada da un sello con uno de sus hanzi (uno que no tenga ya sello); los logros dan sellos raros.
+const LOGROS=[
+  {k:'perfecta',  t:'完美',   n:'Lección perfecta',               o:{forma:'ovalo',doble:true}},
+  {k:'racha7',    t:'七日',   n:'7 días de racha',                o:{forma:'circulo',blanco:true,doble:true}},
+  {k:'racha30',   t:'三十日', n:'30 días de racha',               o:{forma:'cuadro',blanco:true,doble:true}},
+  {k:'banco',     t:'清',     n:'Vaciar el banco de errores',     o:{forma:'cuadro',blanco:false,doble:true}},
+  {k:'planas',    t:'书',     n:'10 planas de memoria',           o:{forma:'redondeado',blanco:true,doble:true}},
+  {k:'cien',      t:'百字',   n:'100 hanzi',                      o:{forma:'ovalo',blanco:true,doble:true}},
+  {k:'libro',     t:'一课',   n:'Terminar una lección del libro', o:{forma:'cuadro',blanco:false,doble:true}},
+  {k:'cincuenta', t:'好学',   n:'50 lecciones',                   o:{forma:'circulo',blanco:false,doble:true}},
+];
+const ORO='#b0731f';
+// Dibujo del sello: cada uno distinto según su semilla (forma, 朱文 letra roja / 白文 letra blanca, borde,
+// inclinación y un desgaste de tinta como de sello de verdad).
+function azarDe(sem){ let s=0; for(const c of String(sem)) s=(s*31+c.charCodeAt(0))>>>0; return ()=>{ s=(s*1664525+1013904223)>>>0; return s/4294967296; }; }
+let idSello=0;
+function sello(texto, sem, opc={}){
+  const r=azarDe(sem), id='sl'+(idSello++), col=opc.color||'#b5312b', papel='#f3f1ea';
+  const forma=opc.forma||['cuadro','cuadro','redondeado','circulo'][Math.floor(r()*4)];
+  const blanco=opc.blanco!==undefined? opc.blanco : r()<.5;
+  const rot=(r()*10-5).toFixed(1), doble=opc.doble||r()<.25, chars=[...texto], n=chars.length;
+  let fondo, borde, borde2='';
+  if(forma==='circulo'){ fondo='<circle cx="50" cy="50" r="45"/>'; borde='<circle cx="50" cy="50" r="43" fill="none" stroke-width="4"/>';
+    if(doble) borde2='<circle cx="50" cy="50" r="37" fill="none" stroke-width="1.6"/>'; }
+  else if(forma==='ovalo'){ fondo='<ellipse cx="50" cy="50" rx="36" ry="46"/>'; borde='<ellipse cx="50" cy="50" rx="34" ry="44" fill="none" stroke-width="4"/>';
+    if(doble) borde2='<ellipse cx="50" cy="50" rx="28" ry="38" fill="none" stroke-width="1.6"/>'; }
+  else { const rr=forma==='redondeado'?12:2; fondo=`<rect x="5" y="5" width="90" height="90" rx="${rr}"/>`; borde=`<rect x="7" y="7" width="86" height="86" rx="${rr}" fill="none" stroke-width="4.5"/>`;
+    if(doble) borde2=`<rect x="13" y="13" width="74" height="74" rx="${forma==='redondeado'?8:1}" fill="none" stroke-width="1.6"/>`; }
+  // 1 letra al centro; 2 en columna; 3-4 en dos columnas leyendo de derecha a izquierda, como los sellos
+  const fs = n===1? (forma==='circulo'?58:64) : n===2? (forma==='ovalo'?36:38) : 32;
+  const pos = n===1? [[50,52]] : n===2? [[50,31],[50,72]] : [[70,32],[70,70],[30,32],[30,70]];
+  const letras=chars.map((c,i)=>`<text x="${pos[i][0]}" y="${pos[i][1]}" font-size="${fs}" text-anchor="middle" dominant-baseline="central" font-family="Kai, KaiTi, serif">${c}</text>`).join('');
+  const filtro=`<filter id="${id}f" x="-5%" y="-5%" width="110%" height="110%"><feTurbulence type="fractalNoise" baseFrequency="${(.9+r()*.5).toFixed(2)}" numOctaves="2" seed="${Math.floor(r()*99)}"/>`+
+    `<feColorMatrix values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 -5 3.9"/><feComposite in="SourceGraphic" operator="in"/></filter>`;
+  const mascara=`<mask id="${id}m"><rect width="100" height="100" fill="#fff"/><g fill="#000">${letras}</g></mask>`;
+  const cuerpo = blanco ? `<g fill="${col}" mask="url(#${id}m)">${fondo}</g><g stroke="${papel}">${borde2}</g>`
+                        : `<g fill="${col}" stroke="${col}">${borde}${borde2}${letras}</g>`;
+  const anillo = opc.anillo? `<circle cx="50" cy="50" r="49" fill="none" stroke="${opc.anillo}" stroke-width="1.5" stroke-dasharray="2 2.5"/>` : '';
+  return `<svg viewBox="0 0 100 100" aria-hidden="true"><defs>${filtro}${mascara}</defs><g transform="rotate(${rot} 50 50)" filter="url(#${id}f)">${cuerpo}</g>${anillo}</svg>`;
+}
+const selloLeccion=(id,h)=>sello(h,'L'+id);
+const selloLogro=g=>sello(g.t,'G'+g.k,{...g.o,anillo:ORO});
+// hanzi que enseña cada lección (los mismos que usa armaLeccion / armaLeccionLibro)
+function hanziDeLeccion(ui,l){
+  const u=UNIDADES[ui]; if(!u) return [];
+  if(u.libro){ const m=Math.ceil(u.pal.length/2), ws= l===0? u.pal.slice(0,m) : l===1? u.pal.slice(m) : u.pal;
+    return [...new Set(ws.flatMap(w=>[...w]).filter(c=>c>='\u4e00' && c<='\u9fff'))]; }
+  const m=Math.ceil(u.hz.length/2); return l===0? u.hz.slice(0,m) : l===1? u.hz.slice(m) : u.hz.slice();
+}
+function selloDeLeccion(ui,l,f){
+  const id=idL(ui,l); if(S.sellos[id]) return null;
+  const usados=new Set(Object.values(S.sellos).map(x=>x.h)), cand=hanziDeLeccion(ui,l).filter(c=>infoHanzi(c)[1]);
+  const h=cand.find(c=>!usados.has(c)) || cand[0]; if(!h) return null;
+  return S.sellos[id]={h, f:f||hoy()};
+}
+const hanziAprendidos=()=>new Set(Object.keys(S.hechas).flatMap(id=>{ const [u,l]=id.split('-').map(Number); return hanziDeLeccion(u,l); }));
+function leccionLibroCompleta(){
+  const g={}; UNIDADES.forEach((u,ui)=>{ if(u.libro) (g[u.num]=g[u.num]||[]).push(ui); });   // u.num = 第一课, 第二课…
+  return Object.values(g).some(uis=>uis.every(ui=>[0,1,2].every(l=>S.hechas[idL(ui,l)])));
+}
+// Revisa qué logros se acaban de ganar (ctx: perfecta, vació el banco). Devuelve los nuevos.
+function revisaLogros(ctx={}){
+  const nuevos=[], gana=k=>{ if(!S.logros[k]){ S.logros[k]=hoy(); nuevos.push(LOGROS.find(x=>x.k===k)); } };
+  if(ctx.perfecta) gana('perfecta');
+  if(S.racha>=7) gana('racha7');
+  if(S.racha>=30) gana('racha30');
+  if(ctx.vacioBanco && !Object.keys(S.errores).length) gana('banco');
+  if(Object.values(S.planas).filter(v=>v>=3).length>=10) gana('planas');
+  if(hanziAprendidos().size>=100) gana('cien');
+  if(leccionLibroCompleta()) gana('libro');
+  if(Object.keys(S.hechas).length>=50) gana('cincuenta');
+  return nuevos;
+}
+const nSellos=()=>Object.keys(S.sellos).length+Object.keys(S.logros).length;
+// Al abrir: las lecciones que ya estaban hechas reciben su sello (con la fecha en que se hicieron).
+(()=>{ S.sellos=S.sellos||{}; S.logros=S.logros||{};
+  Object.entries(S.hechas).sort((a,b)=>String(a[1]).localeCompare(String(b[1]))).forEach(([id,f])=>{
+    const [u,l]=id.split('-').map(Number); selloDeLeccion(u,l,String(f).slice(0,10)); });
+  revisaLogros(); guardar(); })();
+
+const etiquetaUnidad=ui=>{ const u=UNIDADES[ui], m=u.libro && u.t.match(/Lección (\w+)/); return m ? m[1] : 'Rad. '+(ui+1); };
+function abreAlbum(){
+  let a=$('album'); if(!a){ a=document.createElement('div'); a.id='album'; a.className='album-hoja'; document.body.appendChild(a); }
+  const total=UNIDADES.length*LECCIONES_POR_UNIDAD, hechos=Object.keys(S.sellos).length, nl=Object.keys(S.logros).length;
+  let lec='';
+  UNIDADES.forEach((u,ui)=>{ for(let l=0;l<LECCIONES_POR_UNIDAD;l++){ const id=idL(ui,l), s=S.sellos[id], pie=`${etiquetaUnidad(ui)} · ${l+1}`;
+    lec+= s ? `<button class="ap-hueco" data-sello="${id}">${selloLeccion(id,s.h)}<span class="pie">${pie}</span></button>`
+            : `<div class="ap-hueco vacio"><span class="pie-vacio">${pie}</span></div>`; } });
+  const log=LOGROS.map(g=>S.logros[g.k]
+    ? `<button class="ap-hueco" data-logro="${g.k}">${selloLogro(g)}<b>${g.n}</b></button>`
+    : `<div class="ap-hueco vacio"><i>?</i><b>${g.n}</b></div>`).join('');
+  a.innerHTML=`<div class="wrap"><div class="ap-cabeza"><button class="ap-cerrar" aria-label="Cerrar">✕</button></div>
+    <h2 class="cjk">印谱</h2><p class="ap-sub">Tu álbum de sellos · ${nSellos()} ${nSellos()===1?'sello':'sellos'}</p>
+    <div class="ap-seccion">Lecciones <span>${hechos} de ${total}</span></div><div class="ap-rejilla">${lec}</div>
+    <div class="ap-seccion">Logros <span>${nl} de ${LOGROS.length}</span></div><div class="ap-rejilla logros">${log}</div>
+    <p class="ap-sub" style="margin-top:18px">Cada lección que terminas te da un sello con uno de sus hanzi. Los logros dan sellos raros.</p></div>
+    <div class="ap-detalle" hidden></div>`;
+  a.hidden=false; document.body.classList.add('con-album'); a.scrollTop=0;
+  a.querySelector('.ap-cerrar').onclick=()=>{ a.hidden=true; document.body.classList.remove('con-album'); };
+  const det=a.querySelector('.ap-detalle');
+  det.onclick=()=>{ det.hidden=true; };
+  a.querySelectorAll('[data-sello]').forEach(b=>b.onclick=()=>{ const id=b.dataset.sello, s=S.sellos[id], [u,l]=id.split('-').map(Number), [py,es]=infoHanzi(s.h);
+    det.innerHTML=`<div class="caja">${selloLeccion(id,s.h)}<div class="py">${py}</div><div class="es">${es}</div>
+      <div class="de">Sello de ${UNIDADES[u].t} · ${NOMBRES[l]}<br>${s.f}</div><p class="toca">Toca para cerrar</p></div>`; det.hidden=false; });
+  a.querySelectorAll('[data-logro]').forEach(b=>b.onclick=()=>{ const g=LOGROS.find(x=>x.k===b.dataset.logro);
+    det.innerHTML=`<div class="caja">${selloLogro(g)}<div class="es"><b>${g.n}</b></div><div class="de">Logro · ${S.logros[g.k]}</div><p class="toca">Toca para cerrar</p></div>`; det.hidden=false; });
+}
+$('ver-album').onclick=abreAlbum;
+
 // ---------- extras ----------
 $('exportar').onclick=()=>{
   const data={app:'hanzi-camino',version:3,exportado:new Date().toISOString(),xp:S.xp,racha:S.racha,ultimo_dia:S.ultimoDia,
-    lecciones_hechas:S.hechas,aciertos:S.aciertos,fallos:S.fallos,repaso:S.srs,planas:S.planas,banco_errores:S.errores};
+    lecciones_hechas:S.hechas,aciertos:S.aciertos,fallos:S.fallos,repaso:S.srs,planas:S.planas,banco_errores:S.errores,sellos:S.sellos,logros:S.logros};
   const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([JSON.stringify(data,null,2)],{type:'application/json'}));
   a.download='hanzi-progreso-'+hoy()+'.json'; a.click();
 };
 $('borrar').onclick=()=>pregunta({sello:'删', titulo:'¿Borrar todo tu progreso?',
-  texto:'Se borran lecciones, XP, racha, repasos y planas. No se puede deshacer. Si quieres, primero exporta tu progreso.',
+  texto:'Se borran lecciones, sellos, racha, repasos y planas. No se puede deshacer. Si quieres, primero exporta tu progreso.',
   si:'Borrar todo', no:'Cancelar', peligro:true}).then(v=>{ if(v){ const son=S.sonido, vib=S.vibra; S=VACIO(); S.sonido=son; S.vibra=vib; guardar(); pinta(); pintaAjustes(); } });
 pinta(); pintaAjustes();
 if('serviceWorker' in navigator && location.protocol.startsWith('http')) navigator.serviceWorker.register('sw.js').catch(e=>{});
