@@ -42,7 +42,21 @@
   .ejemplos li{position:relative;padding-left:24px;margin:6px 0}
   .ejemplos li::before{content:"";position:absolute;left:3px;top:.3em;width:12px;height:12px;border-radius:2px;background:var(--seal);
     transform:rotate(-8deg);box-shadow:inset 0 0 0 1.5px var(--seal),inset 0 0 0 2.5px #f6e9e4}
-  .nw{white-space:nowrap}   /* un grupo de hanzi no se parte entre renglones */
+  .nw{white-space:nowrap}
+  /* partes del hanzi: la animación (trazos encima del carácter) y su lista */
+  .trazos-partes{position:absolute;left:50%;top:9%;height:82%;width:auto;aspect-ratio:1/1;transform:translateX(-50%);overflow:visible;pointer-events:none;fill:var(--ink)}
+  .trazos-partes .parte{transition:transform .7s cubic-bezier(.3,1.3,.5,1),fill .4s,opacity .35s} .trazos-partes .parte.tenue{opacity:.2}
+  .palabra.cargando .mizi>span{visibility:hidden}
+  .palabra .mizi{transition:width .45s ease,height .45s ease,margin .45s ease} .palabra{transition:gap .45s}
+  .palabra.animando{align-items:center;gap:8px} .palabra.animando .mizi+.mizi{margin-left:0}
+  .palabra .sello{transition:opacity .3s} .palabra.animando .sello{opacity:0}
+  .letrero-parte{height:0;overflow:hidden;opacity:0;margin:-6px 0 0;transition:height .35s,opacity .3s;font-size:16px;line-height:1.3;color:var(--ink2)}
+  .letrero-parte.on{height:70px;opacity:1}
+  .letrero-parte .h{font-family:var(--kai);font-size:28px;line-height:1;vertical-align:-4px;margin-right:6px}
+  .letrero-parte .suma .h{margin:0 2px}
+  .letrero-parte .r{font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;margin-top:2px}
+  .letrero-parte .puntos{display:flex;gap:5px;justify-content:center;margin-top:5px} .letrero-parte .puntos i{width:7px;height:7px;border-radius:50%;background:#cfc9bb}
+  .botones-intro{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}   /* un grupo de hanzi no se parte entre renglones */
   .ico{display:inline-block;width:1.1em;height:1.1em;vertical-align:-.18em}
   .oir{gap:7px}
   .bocina{color:var(--ink2);padding:6px}
@@ -90,11 +104,12 @@
   .barra i{display:block;height:100%;width:0;background:var(--ink);transition:width .35s}
   .ej{flex:1;padding:4px 18px 170px}
   .ej h3{margin:4px 0 14px;font-size:19px;font-weight:600}
-  .mizi{width:200px;height:200px;margin:8px auto 18px;position:relative;border:2px solid var(--seal);background:
+  .mizi{width:200px;height:200px;margin:8px auto 18px;position:relative;border:2px solid var(--seal)}
+  .mizi::before{content:"";position:absolute;inset:0;background:
       linear-gradient(to right,transparent 49.6%,#b5312b55 49.6%,#b5312b55 50.4%,transparent 50.4%),
       linear-gradient(to bottom,transparent 49.6%,#b5312b55 49.6%,#b5312b55 50.4%,transparent 50.4%),
-      linear-gradient(45deg,transparent 49.7%,#b5312b30 49.7%,#b5312b30 50.3%,transparent 50.3%),
-      linear-gradient(-45deg,transparent 49.7%,#b5312b30 49.7%,#b5312b30 50.3%,transparent 50.3%)}
+      linear-gradient(to top right,transparent 49.7%,#b5312b30 49.7%,#b5312b30 50.3%,transparent 50.3%),
+      linear-gradient(to bottom right,transparent 49.7%,#b5312b30 49.7%,#b5312b30 50.3%,transparent 50.3%)}
   .mizi>span{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:var(--kai);font-size:160px;line-height:1}
   .sello{position:absolute;right:-22px;bottom:-18px;width:60px;height:60px;border-radius:6px;background:var(--seal);color:#f6e9e4;
     font-family:var(--kai);font-style:normal;font-size:34px;display:flex;align-items:center;justify-content:center;transform:rotate(-8deg);
@@ -891,14 +906,116 @@ function notaHTML(n){
 }
 function pPalIntro(e){
   const p=P[e.w];
-  $('ej').innerHTML=`<div class="intro">${miziPal(p.p,'<i class="sello nuevo">新</i>')}
+  $('ej').innerHTML=`<div class="intro">${miziPal(p.p,'<i class="sello nuevo">新</i>')}<div class="letrero-parte"></div>
     <div class="py">${p.py}</div><div class="es">${p.es}</div>
     ${p.cat && p.cat!=='—' ? `<p class="sub">${p.cat}</p>` : ''}
     ${susCaracteres(p.p)}
     ${p.nota ? notaHTML(p.nota) : ''}
-    ${oirBtn(p.p, S.sonido?'Repetir':'Escuchar')}</div>`;
+    <div class="botones-intro">${oirBtn(p.p, S.sonido?'Repetir':'Escuchar')}<span id="partes-bot"></span></div></div>`;
   if(S.sonido) habla(p.p);
+  // En esta tarjeta el carácter se dibuja con sus trazos (también de pincel), para que la animación que lo
+  // separa en partes use la misma letra que se ve quieta. Mientras cargan, no se enseña otra letra.
+  const pal=document.querySelector('#ej .intro .palabra');
+  if(!TRAZOS){ pal.classList.add('cargando'); setTimeout(()=>pal.classList.remove('cargando'),900); }
+  Promise.all([cargaTrazos(), cargaPartes().catch(()=>null)]).then(()=>{
+    if(L.actual!==e) return;   // ya cambió de ejercicio
+    dibujaConTrazos(p.p);
+    if(!PARTES) return;
+    const objetivos=hanziConPartes(p.p); if(!objetivos.length) return;
+    $('partes-bot').innerHTML=`<button class="oir" id="ver-partes">${ICO_PARTES}<span>Ver sus partes</span></button>`;
+    $('ver-partes').onclick=()=>animaPartes(objetivos);
+    setTimeout(()=>{ if(L.actual===e) animaPartes(objetivos); },400);
+  }).catch(()=>pal.classList.remove('cargando'));   // sin los trazos, la tarjeta se queda con la fuente normal
 }
+
+// ---------- partes del hanzi (animación de la tarjeta de palabra nueva) ----------
+// partes.json lo arma herramientas/partes.py (Make Me a Hanzi): {hanzi: {t, p:[{c, py, es, r, tr}]}}
+//   t: f = una parte da el significado y otra el sonido · i = las partes juntas forman la idea · d = dibujo
+//   r: s = da el significado · f = da el sonido · tr = qué trazos (índices de trazos.json) son de esa parte
+let PARTES=null, cargandoPartes=null;
+function cargaPartes(){
+  if(PARTES) return Promise.resolve(PARTES);
+  return cargandoPartes || (cargandoPartes=fetch('partes.json').then(r=>{ if(!r.ok) throw new Error('partes.json '+r.status); return r.json(); })
+    .then(j=>PARTES=j).catch(err=>{ cargandoPartes=null; throw err; }));
+}
+// Tintas chinas: bermellón, índigo, jade, ocre, ciruela, azul pizarra
+const PAL_PARTES=['#b5312b','#2c5d8a','#2f6b4c','#b0731f','#7a3b69','#3d6f78'];
+const ROL_PARTE={s:'da el significado', f:'da el sonido'};
+const ICO_PARTES='<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="7" height="14" rx="1"/><rect x="14" y="5" width="7" height="14" rx="1"/><path d="M10 12h4"/></svg>';
+// Qué hanzi de la palabra se separan: palabras de hasta 3 caracteres; no los radicales (ya son piezas
+// básicas), ni los dibujos, ni los que solo imitan el sonido (西 en 墨西哥).
+function hanziConPartes(w){
+  const ch=[...w]; if(ch.length>3) return [];
+  const soloSon=new Set(); let k=0;
+  partesDe(w).forEach(x=>{ if(x.son) for(let j=0;j<x.t.length;j++) soloSon.add(k+j); k+=x.t.length; });
+  const sil=P[w].pn.split(' ');
+  return ch.map((c,i)=>({c, i, py:pySil(sil[i]||'')}))
+    .filter(x=>!soloSon.has(x.i) && !RADS[x.c] && PARTES[x.c] && PARTES[x.c].p.length>1 && TRAZOS[x.c]);
+}
+// El carácter en SVG, con un grupo por parte (los trazos que no son de ninguna parte van aparte, en tinta).
+function svgTrazos(ch){
+  const d=TRAZOS[ch], pt=PARTES && PARTES[ch], gr=(pt && pt.p.length>1)? pt.p.map(p=>p.tr) : [];
+  const usados=new Set(gr.flat()), resto=d.strokes.map((_,i)=>i).filter(i=>!usados.has(i));
+  const grupos=gr.map((g,k)=>[g,k]).concat(resto.length? [[resto,-1]] : []);
+  return `<svg class="trazos-partes" viewBox="0 0 1024 1024" aria-hidden="true"><g transform="translate(0,900) scale(1,-1)">${
+    grupos.map(([g,k])=>`<g class="parte" data-k="${k}">${g.map(i=>`<path d="${d.strokes[i]}"/>`).join('')}</g>`).join('')}</g></svg>`;
+}
+function dibujaConTrazos(w){
+  const pal=document.querySelector('#ej .intro .palabra'); if(!pal) return;
+  const cajas=pal.querySelectorAll('.mizi');
+  [...w].forEach((c,i)=>{ const caja=cajas[i]; if(!caja || !TRAZOS[c] || caja.querySelector('.trazos-partes')) return;
+    caja.insertAdjacentHTML('beforeend', svgTrazos(c)); caja.querySelector('span').style.visibility='hidden'; });
+  pal.classList.remove('cargando');
+}
+// Animación: el cuadro se hace ancho (en palabras de 2-3 caracteres se explica uno a la vez y los otros se
+// hacen chiquitos), las partes se apartan con su color y se ilumina una por una con su letrero abajo
+// (pinyin · significado · si da el significado o el sonido). Al final, "口 + 尼 → 呢" y todo se vuelve a juntar.
+let animandoPartes=false;
+async function animaPartes(objetivos){
+  if(animandoPartes || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const pal=document.querySelector('#ej .intro .palabra'), letrero=document.querySelector('#ej .intro .letrero-parte');
+  if(!pal || !letrero) return;
+  animandoPartes=true; pal.classList.add('animando');
+  const vivo=()=>pal.isConnected, espera=ms=>new Promise(r=>setTimeout(r,ms));
+  const cajas=[...pal.querySelectorAll('.mizi')], n=cajas.length, CHICO=56;
+  const W=n>1? Math.min(290, 338-(n-1)*(CHICO+8)) : 330, H=n>1? 180 : 200;
+  try{
+    for(const x of objetivos){
+      if(!vivo()) break;
+      const caja=cajas[x.i], svg=caja && caja.querySelector('.trazos-partes'); if(!svg) continue;
+      cajas.forEach((c,j)=>{ const yo=j===x.i; c.style.width=(yo?W:CHICO)+'px'; c.style.height=(yo?H:CHICO)+'px'; c.classList.toggle('chica',!yo); });
+      await espera(480); if(!vivo()) break;
+      const d=TRAZOS[x.c], datos=PARTES[x.c].p, ps=[...svg.querySelectorAll('.parte')].filter(g=>+g.dataset.k>=0);
+      const cen=idx=>{ const pts=idx.flatMap(i=>d.medians[i]), xs=pts.map(q=>q[0]), ys=pts.map(q=>q[1]);
+        return [(Math.min(...xs)+Math.max(...xs))/2, (Math.min(...ys)+Math.max(...ys))/2]; };
+      const todo=cen(d.strokes.map((_,i)=>i)), u=1024/(H*.82);   // px de pantalla → unidades del dibujo
+      ps.forEach(g=>{ const k=+g.dataset.k, [cx,cy]=cen(datos[k].tr); let dx=cx-todo[0], dy=cy-todo[1]; const m=Math.hypot(dx,dy)||1;
+        g.cx=cx; g.cy=cy; g.color=PAL_PARTES[k%PAL_PARTES.length];
+        g.style.transform=`translate(${dx/m*(W>250?58:40)*u}px,${dy/m*26*u}px)`; g.style.fill=g.color; });
+      await espera(700);
+      // una por una, de izquierda a derecha y de arriba abajo (en el dibujo, la y crece hacia arriba)
+      const orden=[...ps].sort((a,b)=>(a.cx-a.cy)-(b.cx-b.cy));
+      letrero.classList.add('on');
+      for(const g of orden){ if(!vivo()) break;
+        ps.forEach(o=>o.classList.toggle('tenue',o!==g)); const p=datos[+g.dataset.k];
+        letrero.innerHTML=`<div><span class="h" style="color:${g.color}">${p.c}</span><b style="color:${g.color}">${p.py}</b>${p.es?` · ${p.es}`:''}</div>`+
+          `${p.r?`<div class="r" style="color:${g.color}">${ROL_PARTE[p.r]}</div>`:''}`+
+          `<div class="puntos">${orden.map(o=>`<i style="${o===g?`background:${g.color}`:''}"></i>`).join('')}</div>`;
+        await espera(3000); }
+      if(!vivo()) break;
+      ps.forEach(o=>o.classList.remove('tenue'));
+      letrero.innerHTML=`<div class="suma">${orden.map(g=>`<span class="h" style="color:${g.color}">${datos[+g.dataset.k].c}</span>`).join(' + ')} → <span class="h">${x.c}</span> ${x.py}</div>`;
+      await espera(2600); if(!vivo()) break;
+      letrero.classList.remove('on');
+      ps.forEach(g=>{ g.style.transform=''; }); await espera(650);
+      ps.forEach(g=>{ g.style.fill=''; }); await espera(350);
+    }
+  } finally {
+    cajas.forEach(c=>{ c.style.width=''; c.style.height=''; c.classList.remove('chica'); });
+    pal.classList.remove('animando'); animandoPartes=false;
+  }
+}
+
 function pPalSig(e){
   const p=P[e.w];
   const malas=toma([...new Set(e.pool.filter(x=>x!==e.w).map(x=>P[x].es))].filter(s=>s!==p.es),3);
