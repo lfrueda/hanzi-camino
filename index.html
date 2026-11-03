@@ -26,11 +26,17 @@
     display:flex;justify-content:space-between;align-items:center;padding:12px 18px;border-bottom:1.5px solid var(--ink)}
   #camino header h1{margin:0;font-family:var(--kai);font-size:30px;font-weight:400;letter-spacing:4px}
   .chips{display:flex;gap:16px;font-weight:700;font-size:15px;align-items:center}
-  .ajuste{width:32px;height:32px;display:inline-flex;align-items:center;justify-content:center;font-family:var(--kai);font-size:20px;line-height:1;
+  .ajuste{display:inline-flex;flex-direction:column;align-items:center;gap:3px;font-size:10px;font-weight:700;line-height:1;color:var(--ink2);min-width:40px}
+  .ajuste i{width:30px;height:30px;display:flex;align-items:center;justify-content:center;
     border-radius:5px;background:var(--seal);color:#f6e9e4;transform:rotate(-6deg);box-shadow:inset 0 0 0 2px var(--seal),inset 0 0 0 3.5px #f6e9e4;
     transition:transform .15s,background .15s}
-  .ajuste:active{transform:rotate(-6deg) scale(.9)}
-  .ajuste.off{background:transparent;color:var(--muted);box-shadow:none;border:1.5px dashed var(--line);transform:none}
+  .ajuste i svg{width:18px;height:18px}
+  .ajuste:active i{transform:rotate(-6deg) scale(.9)}
+  .ajuste.off{color:var(--muted)}
+  .ajuste.off i{background:transparent;color:var(--muted);box-shadow:none;border:1.5px dashed var(--line);transform:none}
+  /* etiqueta de qué es lo que ves: radical, hanzi, palabra, frase, pregunta, diálogo */
+  .tag{display:inline-block;font-size:12px;font-weight:700;letter-spacing:.08em;color:var(--seal);border:1.5px solid var(--seal);padding:2px 8px;margin-bottom:6px}
+  .tag + br + .intro{display:block;margin-top:14px}
   .ico{display:inline-block;width:1.1em;height:1.1em;vertical-align:-.18em}
   .oir{gap:7px}
   .bocina{color:var(--ink2);padding:6px}
@@ -202,7 +208,11 @@
   .tecla-tonos button{font-size:24px;padding:9px 0 7px;background:var(--sheet);border:1.5px solid var(--ink);box-shadow:2px 2px 0 var(--ink);line-height:1}
   .tecla-tonos button small{display:block;font-size:11px;color:var(--muted);margin-top:3px}
   .tecla-tonos button:active{transform:translate(2px,2px);box-shadow:none}
-  .oir{display:inline-flex;align-items:center;gap:6px;font-size:13px;color:var(--ink2);border:1.5px solid var(--line);padding:5px 12px;margin-top:6px;background:var(--sheet)}
+  .oir{display:inline-flex;align-items:center;gap:7px;font-size:14px;font-weight:700;color:var(--seal);padding:7px 15px 7px 12px;margin-top:8px;
+    background:var(--sheet);border-radius:5px;transform:rotate(-1.5deg);transition:transform .12s;
+    box-shadow:inset 0 0 0 1.5px var(--seal),inset 0 0 0 3.5px var(--sheet),inset 0 0 0 4.5px var(--seal)}
+  .oir:active{transform:rotate(-1.5deg) scale(.94)}
+  .burb .oir{font-size:12px;padding:5px 11px 5px 9px;margin-top:6px}
   /* diálogos */
   .chat{display:flex;flex-direction:column;gap:10px;margin:6px 0 14px}
   .burb{max-width:84%;padding:9px 12px;border:1.5px solid var(--ink);background:var(--sheet)}
@@ -531,34 +541,43 @@ const EFECTOS={
   mal:  [['switch28',0,.8,1],['click4',.08,.7,1]],
   fin:  [[0,1],[.1,1.26],[.2,1.498],[.3,2]].map(([t,r])=>['impactWood_light_000',t,r,1]).concat([['impactWood_heavy_000',.45,1.2,1]]),
 };
-let AC=null, BUF={}, cargandoSon=null;
+let AC=null, BUF={}, INI={}, cargandoSon=null;   // INI: segundos de silencio al inicio de cada muestra (se saltan)
 function audio(){ try{ if(!AC) AC=new (window.AudioContext||window.webkitAudioContext)(); if(AC.state==='suspended') AC.resume(); }catch(e){ AC=null; } return AC; }
 function cargaSonidos(){
   if(cargandoSon) return cargandoSon;
   return cargandoSon=fetch('sonidos.json').then(r=>r.json()).then(j=>Promise.all(Object.entries(j).map(([k,b64])=>{
     const bin=atob(b64), u=new Uint8Array(bin.length); for(let i=0;i<bin.length;i++) u[i]=bin.charCodeAt(i);
-    return new Promise(ok=>audio().decodeAudioData(u.buffer,b=>{ BUF[k]=b; ok(); },()=>ok()));
+    return new Promise(ok=>audio().decodeAudioData(u.buffer,b=>{ BUF[k]=b;
+      const d=b.getChannelData(0); let i=0; while(i<d.length && Math.abs(d[i])<.02) i++; INI[k]=i<d.length ? i/b.sampleRate : 0; ok(); },()=>ok()));
   }))).catch(()=>{ cargandoSon=null; });
 }
 function efecto(nombre, retraso){
   if(!S.sonido) return;
   const c=audio(); if(!c) return;
   if(!Object.keys(BUF).length){ cargaSonidos(); return; }
-  const t0=c.currentTime+.01+(retraso||0);
+  const t0=c.currentTime+(retraso||0);
   for(const [n,t,r,v] of EFECTOS[nombre]){ if(!BUF[n]) continue;
-    const s=c.createBufferSource(), g=c.createGain(); s.buffer=BUF[n]; s.playbackRate.value=r; g.gain.value=v; s.connect(g).connect(c.destination); s.start(t0+t); }
+    const s=c.createBufferSource(), g=c.createGain(); s.buffer=BUF[n]; s.playbackRate.value=r; g.gain.value=v; s.connect(g).connect(c.destination); s.start(t0+t, INI[n]||0); }
 }
 function vibra(n){
   if(!S.vibra) return;
   try{ if(navigator.vibrate){ navigator.vibrate(n===1?25:[25,70,25]); return; }
     const l=document.getElementById('haptico-l'); l.click(); if(n>1) setTimeout(()=>l.click(),110); }catch(e){}
 }
+const ICO_SON='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9.5h3.2L12 5.5v13l-4.8-4H4z" fill="currentColor"/><path d="M15.5 9.2a4 4 0 0 1 0 5.6M18.2 6.6a7.6 7.6 0 0 1 0 10.8"/></svg>',
+      ICO_MUDO='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9.5h3.2L12 5.5v13l-4.8-4H4z" fill="currentColor"/><path d="M16 9.5l5 5M21 9.5l-5 5"/></svg>',
+      ICO_VIB='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="4" width="8" height="16" rx="1.5"/><path d="M4.5 8.5v7M19.5 8.5v7M2 10.5v3M22 10.5v3"/></svg>';
 function pintaAjustes(){ document.querySelectorAll('[data-ajuste]').forEach(b=>{ const k=b.dataset.ajuste;
-  b.classList.toggle('off',!S[k]); b.textContent = k==='sonido' ? (S.sonido?'声':'静') : '振';
+  b.classList.toggle('off',!S[k]);
+  b.innerHTML = k==='sonido' ? (S.sonido?'<i>'+ICO_SON+'</i>Sonido':'<i>'+ICO_MUDO+'</i>Silencio') : '<i>'+ICO_VIB+'</i>'+(S.vibra?'Vibrar':'No vibrar');
   b.setAttribute('aria-label', k==='sonido' ? (S.sonido?'sonido encendido':'sonido apagado') : (S.vibra?'vibración encendida':'vibración apagada')); }); }
 // Icono de bocina dibujado en tinta (en vez del emoji).
 const ICO_OIR='<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+
   '<path d="M4 9.5h3.2L12 5.5v13l-4.8-4H4z" fill="currentColor" fill-opacity=".12"/><path d="M15.5 9.2a4 4 0 0 1 0 5.6M18.2 6.6a7.6 7.6 0 0 1 0 10.8"/></svg>';
+// Botón de escuchar con texto en español. Tras sonar dice "Repetir". Un solo manejador para toda la app.
+const oirBtn=(t,txt)=>`<button class="oir" data-oir="${t}">${ICO_OIR}<span>${txt||'Escuchar'}</span></button>`;
+document.addEventListener('click',ev=>{ const b=ev.target.closest('[data-oir]'); if(!b) return;
+  habla(b.dataset.oir); const s=b.querySelector('span'); if(s) s.textContent='Repetir'; });
 // ---------- diálogo propio ----------
 // pregunta({sello,titulo,texto,si,no,peligro}) → Promise<boolean>. Toca fuera o 'no' = false.
 function pregunta(o){ return new Promise(ok=>{
@@ -571,9 +590,15 @@ function pregunta(o){ return new Promise(ok=>{
 }); }
 document.querySelectorAll('[data-ajuste]').forEach(b=>b.onclick=()=>{ const k=b.dataset.ajuste; S[k]=!S[k]; guardar(); pintaAjustes();
   if(k==='sonido' && S.sonido){ cargaSonidos().then(()=>efecto('tap')); } if(k==='vibra') vibra(1); });
-// el iPhone solo deja sonar audio después de un toque: se prepara en el primer toque
-document.addEventListener('touchstart',function prep(){ audio(); cargaSonidos(); document.removeEventListener('touchstart',prep); },{passive:true});
-document.addEventListener('mousedown',function prep(){ audio(); cargaSonidos(); document.removeEventListener('mousedown',prep); });
+// Todos los botones suenan al presionar (pointerdown), no al soltar. El de sonido maneja el suyo.
+document.addEventListener('pointerdown',ev=>{ const b=ev.target.closest('button, #arbol-svg .nd');
+  if(!b || b.disabled || b.dataset.ajuste==='sonido') return; efecto('tap'); },true);
+// Los sonidos se cargan desde el arranque. El navegador solo deja sonar audio tras un toque
+// (en iPhone cuenta al soltar el dedo): se desbloquea con el primer toque/clic que lo permita.
+cargaSonidos();
+const EV_AUDIO=['pointerdown','pointerup','touchend','mousedown','click','keydown'];
+function desbloqueaAudio(){ const c=audio(); if(c && c.state==='running') EV_AUDIO.forEach(n=>document.removeEventListener(n,desbloqueaAudio,true)); }
+EV_AUDIO.forEach(n=>document.addEventListener(n,desbloqueaAudio,true));
 
 // ================== APARTADOS ==================
 let vista='hoy';
@@ -607,15 +632,16 @@ function pintaHoy(){
     <div class="hoy"><span class="sellohoy">今</span>
       <h3>Práctica de hoy</h3>
       <p>${cola.length ? 'Te sale justo lo que estás por olvidar, más unas palabras nuevas del libro.' : 'Todo al día. Vuelve mañana o avanza en 课 Libro.'}</p>
-      <div class="meta"><span>${due} repasos</span><span>${errores} errores</span><span>${nuevas} nuevas</span><span>~${min} min</span></div>
+      ${cola.length?`<div class="meta">${[[due,'repaso','repasos'],[errores,'error','errores'],[nuevas,'nueva','nuevas']].filter(x=>x[0])
+        .map(([n,uno,varios])=>`<span>${n} ${n===1?uno:varios}</span>`).join('')}<span>~${min} min</span></div>`:''}
       <button class="go" id="go-hoy" ${cola.length?'':'disabled'}>${cola.length?'EMPEZAR':'TODO AL DÍA ✓'}</button></div>
     ${banco.length?`<div class="caja"><h4>错 Banco de errores · ${banco.length}</h4>
       <p class="nota" style="margin:0 0 8px">Te salen al azar en Hoy. Cada uno sale del banco cuando lo aciertas ${SALIR_BANCO} días distintos seguidos.</p>
       <div class="debiles">${banco.slice(0,12).map(([k,r])=>`<span class="${'fd'.includes(k[0])?'larga':''}">${textoClave(k)}<small>${r.ok}/${SALIR_BANCO}</small></span>`).join('')}</div>
       ${banco.length>12?`<p class="nota" style="margin-top:8px">y ${banco.length-12} más</p>`:''}</div>`:''}
-    <div class="caja"><h4>Tu avance</h4><div class="numeros">
-      <div><b>${pal}</b>palabras</div><div><b>${hz}</b>hanzi</div><div><b>${dominadas}</b>dominadas</div></div>
-      <p class="nota" style="margin-top:10px">${manana?`Mañana te tocan ${manana} repasos.`:'Lo que aprendes en Libro entra aquí solo, para repasarlo a tiempo.'}</p></div>`;
+    <div class="caja"><h4>Tu avance</h4>${pal||hz||dominadas?`<div class="numeros">${[[pal,'palabras'],[hz,'hanzi'],[dominadas,'dominadas']].filter(x=>x[0])
+      .map(([n,t])=>`<div><b>${n}</b>${t}</div>`).join('')}</div>`:''}
+      <p class="nota" style="margin-top:10px">${manana?`Mañana tienes repaso (~${Math.max(1,Math.round(manana*0.35))} min).`:'Lo que aprendes en Libro entra aquí solo, para repasarlo a tiempo.'}</p></div>`;
   if(cola.length) $('go-hoy').onclick=()=>{ const s=armaHoy(); empezarCola(s.cola,{modo:'hoy',titulo:'Práctica de hoy'}); };
 }
 
@@ -641,7 +667,6 @@ function pintaCamino(){
     const ui=+b.dataset.voc, box=$('voc-'+ui);
     if(box.innerHTML){ box.innerHTML=''; b.textContent=b.textContent.replace('Ocultar','Ver'); return; }
     b.textContent=b.textContent.replace('Ver','Ocultar'); box.innerHTML=vocabularioHTML(UNIDADES[ui]);
-    box.querySelectorAll('[data-oir]').forEach(x=>x.onclick=()=>habla(x.dataset.oir));
   });
 }
 function vocabularioHTML(u){
@@ -652,7 +677,7 @@ function vocabularioHTML(u){
     <p class="nota">✓ visto · ✓✓ lo recuerdas · ✓✓✓ dominado</p>`;
   const dlg=(u.dialogos||[]).map(d=>`<h4 style="margin:16px 0 6px">${d.t}</h4><div class="chat">${d.lineas.map((x,i)=>
     `<div class="burb ${i%2?'b':''}"><div class="quien">${x[0]}</div><div class="h">${x[1]}</div><div class="p">${x[2]}</div><div class="e">${x[3]}</div>
-     <button class="oir" data-oir="${x[1]}">${ICO_OIR} escuchar</button></div>`).join('')}</div>`).join('');
+     ${oirBtn(x[1])}</div>`).join('')}</div>`).join('');
   return tabla+dlg;
 }
 
@@ -739,14 +764,25 @@ function siguiente(){
   $('accion').disabled = !esIntro;
   ({intro:pIntro, significado:pSignificado, hanzi:pHanzi, tono:pTono, escribe:pEscribe, par:pPar, frase:pFrase,
     'pal-intro':pPalIntro, 'pal-sig':pPalSig, 'pal-elige':pPalElige, 'pal-tono':pPalTono, 'pal-escribe':pPalEscribe, dialogo:pDialogo})[e.tipo](e);
+  ponEtiqueta(e);
   window.scrollTo(0,0);
 }
+// Qué es lo que estás viendo. Pregunta = su traducción empieza con ¿.
+function etiqueta(e){
+  if(e.tipo==='dialogo') return 'Diálogo';
+  if(e.tipo==='par') return 'Radical';
+  if(e.tipo==='frase') return e.f[1].startsWith('¿') ? 'Frase · pregunta' : 'Frase';
+  if(e.w){ const p=P[e.w]; return p.es.startsWith('¿') ? 'Palabra · pregunta' : p.cat==='n. propio' ? 'Palabra · nombre propio' : 'Palabra'; }
+  if(e.hz) return RADS[e.hz] ? 'Hanzi · también es radical' : 'Hanzi';
+  return '';
+}
+function ponEtiqueta(e){ const t=etiqueta(e), ej=$('ej'); if(t && !ej.querySelector(':scope > .tag')) ej.insertAdjacentHTML('afterbegin',`<span class="tag">${t.toUpperCase()}</span><br>`); }
 const opcionesHTML=(ops,cjk)=>`<div class="opciones">${ops.map((o,i)=>`<button class="op ${cjk?'cjk':''}" data-i="${i}">${o}</button>`).join('')}</div>`;
 function activaOpciones(){
   document.querySelectorAll('.op').forEach(b=>b.onclick=()=>{
     if(L.estado!=='pregunta') return;
     document.querySelectorAll('.op').forEach(x=>x.classList.remove('sel')); b.classList.add('sel');
-    L.sel=+b.dataset.i; $('accion').disabled=false; efecto('tap');
+    L.sel=+b.dataset.i; $('accion').disabled=false;
   });
 }
 
@@ -756,8 +792,8 @@ function pIntro(e){
     <div class="py">${c.py}</div><div class="es">${c.es}</div>
     <div class="partes"><span class="r">${c.rad}</span>${c.son?`<span>${c.son.split(' ')[0]}</span>`:''}</div>
     <p class="nota">Radical <b class="cjk">${c.rad}</b>: ${RADS[c.rad]||''}${c.son?` · suena parecido a <b class="cjk">${c.son}</b>`:''}</p>
-    <button class="oir" id="oir">${ICO_OIR} escuchar</button></div>`;
-  $('oir').onclick=()=>habla(c.h); if(S.sonido) habla(c.h);
+    ${oirBtn(c.h, S.sonido?'Repetir':'Escuchar')}</div>`;
+  if(S.sonido) habla(c.h);
 }
 function pSignificado(e){
   const c=C[e.hz];
@@ -798,9 +834,9 @@ function pFrase(e){
     $('ej').innerHTML=`<h3>Traduce</h3><p style="font-size:20px;margin:0 0 10px">“${es}”</p>
       <div class="linea">${e.orden.map((i,k)=>`<button class="ficha" data-k="${k}">${e.fichas[i].t}</button>`).join('')}</div>
       <div class="fichas">${e.fichas.map((f,i)=>`<button class="ficha ${f.usada?'hueco':''}" data-i="${i}">${f.t}</button>`).join('')}</div>`;
-    document.querySelectorAll('.fichas .ficha').forEach(b=>b.onclick=()=>{ if(L.estado!=='pregunta')return; const i=+b.dataset.i; if(e.fichas[i].usada)return; e.fichas[i].usada=true; e.orden.push(i); efecto('tap'); pinta(); });
+    document.querySelectorAll('.fichas .ficha').forEach(b=>b.onclick=()=>{ if(L.estado!=='pregunta')return; const i=+b.dataset.i; if(e.fichas[i].usada)return; e.fichas[i].usada=true; e.orden.push(i); pinta(); });
     document.querySelectorAll('.linea .ficha').forEach(b=>b.onclick=()=>{ if(L.estado!=='pregunta')return; const k=+b.dataset.k; e.fichas[e.orden[k]].usada=false; e.orden.splice(k,1); pinta(); });
-    $('accion').disabled = e.orden.length===0;
+    $('accion').disabled = e.orden.length===0; ponEtiqueta(e);
   };
   pinta();
 }
@@ -816,14 +852,19 @@ function opcionesPal(ops){
   return `<div class="opciones">${ops.map((o,i)=>`<button class="op cjk ${n>1?'pal':''}" style="font-size:${fs}px" data-i="${i}">${o}</button>`).join('')}</div>`;
 }
 function pPalIntro(e){
-  const p=P[e.w], conocidos=[...new Set(p.p)].filter(c=>C[c] && p.p.length>1);
+  // Hanzi de la palabra que también están en las unidades de radicales: ¿ya los estudié o todavía no?
+  const p=P[e.w], deRad=[...new Set(p.p)].filter(c=>C[c] && p.p.length>1);
+  const estudiado=c=>!!(S.srs['h:'+c] || S.aciertos[c] || S.fallos[c]);
+  const conocidos=deRad.filter(estudiado), porVer=deRad.filter(c=>!estudiado(c));
+  const unidadDe=c=>{ const i=UNIDADES.findIndex(u=>!u.libro && u.hz.includes(c)); return i<0 ? '' : ` (unidad ${UNIDADES[i].t})`; };
   $('ej').innerHTML=`<div class="intro">${miziPal(p.p,'<i class="sello nuevo">新</i>')}
     <div class="py">${p.py}</div><div class="es">${p.es}</div>
     ${p.cat && p.cat!=='—' ? `<p class="sub">${p.cat}</p>` : ''}
     ${p.nota ? `<p class="nota">${p.nota}</p>` : ''}
     ${conocidos.length ? `<p class="nota">Ya lo viste en radicales: ${conocidos.map(c=>`<b class="cjk">${c}</b> ${C[c].py} · ${C[c].es}`).join(' — ')}</p>` : ''}
-    <button class="oir" id="oir">${ICO_OIR} escuchar</button></div>`;
-  $('oir').onclick=()=>habla(p.p); if(S.sonido) habla(p.p);
+    ${porVer.length ? `<p class="nota">Lo verás en radicales: ${porVer.map(c=>`<b class="cjk">${c}</b> ${C[c].py} · ${C[c].es}${unidadDe(c)}`).join(' — ')}</p>` : ''}
+    ${oirBtn(p.p, S.sonido?'Repetir':'Escuchar')}</div>`;
+  if(S.sonido) habla(p.p);
 }
 function pPalSig(e){
   const p=P[e.w];
@@ -891,13 +932,11 @@ function pDialogo(e){
   const lin=e.d.lineas, x=lin[e.i];
   e.ops=mezcla([x[1],...x[4]]); e.correcta=e.ops.indexOf(x[1]);
   const prev=lin.slice(Math.max(0,e.i-2),e.i);
-  $('ej').innerHTML=`<span class="tag" style="display:inline-block;font-size:12px;font-weight:700;letter-spacing:.08em;color:var(--seal);border:1.5px solid var(--seal);padding:2px 8px;margin-bottom:6px">DIÁLOGO</span>
-    <h3>¿Qué contesta ${x[0]}?</h3>
+  $('ej').innerHTML=`<h3>¿Qué contesta ${x[0]}?</h3>
     <div class="chat">${prev.map(l=>`<div class="burb ${l[0]===x[0]?'b':''}"><div class="quien">${l[0]}</div><div class="h">${l[1]}</div><div class="p">${l[2]}</div>
-      <button class="oir" data-oir="${l[1]}">${ICO_OIR} escuchar</button></div>`).join('')}
+      ${oirBtn(l[1])}</div>`).join('')}
       <div class="burb b hueco"><div class="quien">${x[0]}</div>¿…?</div></div>
     <div class="opciones">${e.ops.map((o,i)=>`<button class="op frase" data-i="${i}">${o}</button>`).join('')}</div>`;
-  document.querySelectorAll('[data-oir]').forEach(b=>b.onclick=()=>habla(b.dataset.oir));
   activaOpciones();
 }
 // Compara pinyin de palabras: acepta 'tóngxué', 'tong2xue2', 'tong2 xue2'; el tono neutro con o sin 5.
@@ -1073,8 +1112,7 @@ function abrePlana(ch){
       <div class="modos"><button data-m="ver">1 · Ver</button><button data-m="calcar">2 · Calcar</button><button data-m="memoria">3 · De memoria</button></div>
       <div id="lienzo"></div><div id="plana-msg"></div>
       <p class="nota" style="text-align:center" id="plana-cuenta"></p>
-      <div style="text-align:center"><button class="oir" id="plana-oir">${ICO_OIR} escuchar</button></div>`;
-    $('plana-oir').onclick=()=>habla(ch);
+      <div style="text-align:center">${oirBtn(ch)}</div>`;
     document.querySelectorAll('.modos button').forEach(b=>b.onclick=()=>{ modoPlana=b.dataset.m; arrancaPlana(); });
     arrancaPlana();
   }).catch(err=>muestraError('No se pudieron cargar los trazos: '+err.message));
