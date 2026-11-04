@@ -730,14 +730,45 @@ function vocabularioHTML(u){
   return tabla+dlg;
 }
 
-// ---------- voz (la del teléfono, sin internet) ----------
-function habla(t){
-  try{ if(!('speechSynthesis' in window)) return; speechSynthesis.cancel();
-    const u=new SpeechSynthesisUtterance(t); u.lang='zh-CN'; u.rate=.8;
-    const v=speechSynthesis.getVoices().find(v=>/^zh[-_]CN/i.test(v.lang)) || speechSynthesis.getVoices().find(v=>/^zh/i.test(v.lang));
-    if(v) u.voice=v; speechSynthesis.speak(u);
-  }catch(e){}
+// ---------- voz ----------
+// Primero los clips propios de voz/ (Azure, voz Xiaoxiao, generados con herramientas/audio.py):
+// misma voz en todos los dispositivos. Si falta el clip, la voz china del dispositivo; si tampoco hay, avisa.
+let VOZ_IDX=null, cargandoVoz=null, vozSonando=null, vozAvisado=false, vozPedido=0;
+const VOZ_BUF={}, VOZ_INI={};
+function cargaIndiceVoz(){
+  return cargandoVoz || (cargandoVoz=fetch('voz/indice.json').then(r=>r.ok?r.json():{}).then(j=>VOZ_IDX=j)
+    .catch(()=>{ cargandoVoz=null; return {}; }));
 }
+function clipVoz(t){
+  if(VOZ_BUF[t]) return Promise.resolve(VOZ_BUF[t]);
+  return cargaIndiceVoz().then(idx=>{ const f=idx[t], c=audio(); if(!f || !c) return null;
+    return fetch('voz/'+f).then(r=>r.ok?r.arrayBuffer():null).then(ab=>ab && new Promise(ok=>c.decodeAudioData(ab,b=>{
+      // los mp3 traen un poco de silencio al inicio: se salta para que suene al instante
+      const d=b.getChannelData(0); let i=0; while(i<d.length && Math.abs(d[i])<.01) i++;
+      VOZ_INI[t]=i<d.length ? Math.max(0,i/b.sampleRate-.02) : 0; VOZ_BUF[t]=b; ok(b); },()=>ok(null))));
+  }).catch(()=>null);
+}
+function habla(t){
+  const c=audio(), n=++vozPedido;   // audio() aquí, dentro del toque: iOS solo deja sonar así
+  if(vozSonando){ try{ vozSonando.stop(); }catch(e){} vozSonando=null; }
+  try{ if('speechSynthesis' in window) speechSynthesis.cancel(); }catch(e){}
+  // Si ya se sabe que no hay clip, la voz del dispositivo va sin esperar (iOS la exige dentro del toque).
+  if(VOZ_IDX && !VOZ_IDX[t]){ vozDispositivo(t); return; }
+  clipVoz(t).then(b=>{ if(n!==vozPedido) return;   // ya se pidió otra cosa
+    if(!b || !c){ vozDispositivo(t); return; }
+    const s=c.createBufferSource(); s.buffer=b; s.connect(c.destination); s.start(0, VOZ_INI[t]||0); vozSonando=s; });
+}
+function vozDispositivo(t){
+  try{ if(!('speechSynthesis' in window)){ sinVoz(t); return; }
+    const vs=speechSynthesis.getVoices(), v=vs.find(v=>/^zh[-_]CN/i.test(v.lang)) || vs.find(v=>/^zh/i.test(v.lang));
+    if(!v && vs.length){ sinVoz(t); return; }   // hay voces, pero ninguna china (p. ej. Windows sin el paquete)
+    const u=new SpeechSynthesisUtterance(t); u.lang='zh-CN'; u.rate=.8; if(v) u.voice=v; speechSynthesis.speak(u);
+  }catch(e){ sinVoz(t); }
+}
+function sinVoz(t){ if(vozAvisado) return; vozAvisado=true;
+  muestraError('No tengo el audio de «'+t+'» y este dispositivo no tiene voz china.'); }
+cargaIndiceVoz();
+try{ speechSynthesis.getVoices(); speechSynthesis.onvoiceschanged=()=>speechSynthesis.getVoices(); }catch(e){}
 
 // ================== GENERADOR DE LECCIONES ==================
 const mezcla=a=>a.map(x=>[Math.random(),x]).sort((p,q)=>p[0]-q[0]).map(x=>x[1]);
