@@ -1319,7 +1319,7 @@ function abrePlana(ch){
     const [py,es]=infoHanzi(ch), d=TRAZOS[ch];
     $('plana-titulo').innerHTML=`<span class="cjk" style="font-size:22px">${ch}</span> ${py} · ${es}`;
     const paso=k=>`<svg viewBox="0 0 1024 1024"><g transform="translate(0,900) scale(1,-1)">${d.strokes.map((s,i)=>
-      `<path d="${s}" fill="${i<k?(i===k-1?'#b5312b':'#1d1b18'):'#d9d4c7'}"/>`).join('')}</g></svg>`;
+      `<path d="${s}" fill="${i===k-1?'#1d1b18':(i<k?'#8a8375':'#d9d4c7')}"/>`).join('')}</g></svg>`;
     $('plana-cuerpo').innerHTML=`<p class="nota" style="text-align:center;margin-top:4px">${d.strokes.length} trazos, en este orden:</p>
       <div class="pasos">${d.strokes.map((s,i)=>paso(i+1)).join('')}</div>
       <div class="modos"><button data-m="ver">1 · Ver</button><button data-m="calcar">2 · Calcar</button><button data-m="memoria">3 · De memoria</button></div>
@@ -1339,7 +1339,7 @@ function arrancaPlana(msg){
   if(typeof HanziWriter==='undefined'){ $('lienzo').innerHTML='<p class="nota" style="padding:20px">Falta hanzi-writer.min.js</p>'; return; }
   if(W){ try{ W.cancelQuiz(); }catch(e){} } $('lienzo').innerHTML='';
   W=HanziWriter.create('lienzo', ch, {width:280,height:280,padding:16, charDataLoader:(c,listo)=>listo(TRAZOS[c]),
-    showCharacter:false, showOutline:modoPlana!=='memoria', strokeColor:'#1d1b18', outlineColor:'#d9d4c7', highlightColor:'#b5312b',
+    showCharacter:false, showOutline:modoPlana!=='memoria', strokeColor:'#1d1b18', outlineColor:'#d9d4c7', highlightColor:'#b5312b', highlightOnComplete:false,
     drawingColor:'#1d1b18', drawingWidth:26, strokeAnimationSpeed:1.1, delayBetweenStrokes:280, showHintAfterMisses:modoPlana==='memoria'?3:1});
   if(modoPlana==='ver'){ W.loopCharacterAnimation(); return; }
   W.quiz({ onComplete:r=>{
