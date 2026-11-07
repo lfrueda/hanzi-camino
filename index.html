@@ -589,13 +589,15 @@ const vencidas=()=>Object.entries(S.srs).filter(([k,r])=>r.due<=hoy() && (k.star
 const palabrasLibro=()=>UNIDADES.filter(u=>u.libro).flatMap(u=>u.pal);
 
 // ---------- efectos de sonido y vibración ----------
-// Sonidos: Kenney (CC0), madera y teclado mecánico. Se tocan con Web Audio; el tono se cambia con la velocidad.
+// Sonidos: Kenney (CC0), madera e interfaz. Se tocan con Web Audio; el tono se cambia con la velocidad.
+// Cada sonido: [muestra, retraso s, tono (velocidad), volumen].
+const VOL=.95;   // volumen de sello, acierto, error y fin (2026-11-07: 5% más bajo); el toque tiene el suyo
 const EFECTOS={
-  tap:  [['click3',0,1,1]],
-  sello:[['footstep05',0,.85,1]],
-  ok:   [['impactWood_light_000',0,1.2,1],['impactWood_light_000',.09,1.6,1]],
-  mal:  [['switch28',0,.8,1],['click4',.08,.7,1]],
-  fin:  [[0,1],[.1,1.26],[.2,1.498],[.3,2]].map(([t,r])=>['impactWood_light_000',t,r,1]).concat([['impactWood_heavy_000',.45,1.2,1]]),
+  tap:  [['toque_interruptor',0,1,.087]],   // casi inaudible y sin agudos (Error 5, 2026-11-07)
+  sello:[['footstep05',0,.85,VOL]],
+  ok:   [['impactWood_light_000',0,1.2,VOL],['impactWood_light_000',.09,1.6,VOL]],
+  mal:  [['switch28',0,.8,VOL],['click4',.08,.7,VOL]],
+  fin:  [[0,1],[.1,1.26],[.2,1.498],[.3,2]].map(([t,r])=>['impactWood_light_000',t,r,VOL]).concat([['impactWood_heavy_000',.45,1.2,VOL]]),
 };
 let AC=null, BUF={}, INI={}, cargandoSon=null;   // INI: segundos de silencio al inicio de cada muestra (se saltan)
 function audio(){ try{ if(!AC) AC=new (window.AudioContext||window.webkitAudioContext)(); if(AC.state==='suspended') AC.resume(); }catch(e){ AC=null; } return AC; }
