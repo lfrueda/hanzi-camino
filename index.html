@@ -122,6 +122,11 @@
   .nodo:disabled{cursor:default}
   .pie{color:var(--muted);font-size:13px;text-align:center;margin:30px 0 40px}
   .pie button{color:var(--ink2);text-decoration:underline;margin:0 6px}
+  .pie .sync-estado{margin:10px 0 0;font-size:12px} .pie .sync-estado.mal{color:var(--seal)}
+  #dlg input.campo{display:block;width:calc(100% - 10px);margin:-6px 0 18px 10px;font:inherit;font-size:20px;padding:12px;
+    border:1.5px solid var(--ink);border-radius:6px;background:var(--sheet);color:var(--ink)}
+  #dlg input.campo:focus{outline:none;box-shadow:0 0 0 3px #b5312b55} #dlg input.campo.codigo{text-align:center;letter-spacing:8px;font-size:26px}
+  #dlg p.aviso{color:var(--seal);margin-top:-10px}
   /* ---------- lección ---------- */
   #leccion{display:none;min-height:100vh;flex-direction:column}
   .top{display:flex;align-items:center;gap:14px;padding:18px}
@@ -323,7 +328,8 @@ window.addEventListener('unhandledrejection',function(ev){ muestraError(String(e
   <div class="vista" id="v-libro">
     <div class="wrap" id="unidades"></div>
     <div class="pie wrap">
-      <button id="exportar">Exportar progreso (JSON)</button>·<button id="borrar">Borrar progreso</button>
+      <button id="sync">Sincronizar dispositivos</button>·<button id="exportar">Exportar progreso (JSON)</button>·<button id="borrar">Borrar progreso</button>
+      <p class="sync-estado" id="sync-estado"></p>
     </div>
   </div>
   <div class="vista wrap" id="v-planas"></div>
@@ -506,7 +512,9 @@ const KEY='hanzi-camino-v1';
 // planas: hanzi → veces escrito de memoria.
 // errores: banco de errores. Clave 'p:'/'h:' (palabra/hanzi), 'r:' (par de radicales), 'f:' (frase), 'd:' (línea de diálogo)
 //          → {f: veces fallado, ok: aciertos seguidos (en días distintos), dia: último día que contó, fallo: último día que lo fallaste}
-const VACIO=()=>({hechas:{}, sellos:{}, logros:{}, xp:0, racha:0, ultimoDia:null, aciertos:{}, fallos:{}, srs:{}, planas:{}, errores:{}, sonido:true, vibra:true});
+// salidos: clave → día en que salió del banco. Sirve al sincronizar: si otro dispositivo aún lo tiene, ya no revive.
+// reinicio: cuándo se borró todo el progreso. Al sincronizar gana el borrado más reciente (ver junta()).
+const VACIO=()=>({hechas:{}, sellos:{}, logros:{}, xp:0, racha:0, ultimoDia:null, aciertos:{}, fallos:{}, srs:{}, planas:{}, errores:{}, salidos:{}, sonido:true, vibra:true});
 let S = (()=>{ try{ return Object.assign(VACIO(), JSON.parse(localStorage.getItem(KEY))||{}) }catch(e){ return VACIO() } })();
 const guardar=()=>{ try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){} };
 const fecha=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
@@ -544,7 +552,7 @@ function bancoResponde(e, ok){
   if(!ok){ const x=r||(S.errores[k]={f:0,ok:0,dia:null,fallo:null}); x.f++; x.ok=0; x.dia=null; x.fallo=hoy(); return; }
   if(!r || r.fallo===hoy() || r.dia===hoy()) return;
   r.ok++; r.dia=hoy();
-  if(r.ok>=SALIR_BANCO){ delete S.errores[k]; L.graduados.push(k); }
+  if(r.ok>=SALIR_BANCO){ delete S.errores[k]; S.salidos[k]=hoy(); L.graduados.push(k); }
 }
 // Arma un ejercicio a partir de una clave (del repaso o del banco). null si ya no existe en los datos.
 function ejercicioDe(k){
@@ -1259,7 +1267,7 @@ function fin(){
   // 印谱: sello nuevo por la lección (solo la primera vez) y logros ganados
   const nuevo = L.modo==='leccion' ? selloDeLeccion(L.ui,L.l) : null;
   const logros = revisaLogros({perfecta: L.modo==='leccion' && !L.errados.size, vacioBanco: L.graduados.length>0});
-  guardar();
+  guardar(); sincroniza();
   $('avance').style.width='100%';
   const fallos=listaFallos(), perfecta=!L.errados.size;
   $('ej').innerHTML=`<div class="fin impacto"><div class="gran ${L.modo==='hoy'?'hoy':''}">${L.modo==='hoy'?'今':'完'}</div>
@@ -1535,6 +1543,140 @@ function abreAlbum(){
 }
 $('ver-album').onclick=abreAlbum;
 
+// ================== SINCRONIZAR ENTRE DISPOSITIVOS (Supabase) ==================
+// El progreso vive primero en el dispositivo (localStorage). Si hay sesión, al abrir la app, al volver a ella y al
+// terminar una lección: baja lo de la nube → lo junta con lo local (junta) → guarda lo junto en los dos lados.
+// Sin librerías: fetch a la API de Supabase. La publishable key PUEDE ir aquí (es pública por diseño): lo que protege
+// los datos son las reglas RLS de la tabla (herramientas/supabase.sql). La secret key NUNCA va en este archivo.
+const SB_URL='https://gevdhcrfjbvllcqmqtdi.supabase.co', SB_KEY='sb_publishable_h7TXB9nXJt_-U9EClmWoJw_pnMtX69F';
+const KEY_SES='hanzi-camino-sesion', ESQUEMA=1;   // ESQUEMA: subir si cambia la forma del progreso (p. ej. camino único)
+const SOLO_AQUI=['sonido','vibra'];               // ajustes de cada dispositivo: no viajan
+let SES=(()=>{ try{ return JSON.parse(localStorage.getItem(KEY_SES)); }catch(e){ return null; } })();
+const guardaSes=()=>{ try{ SES ? localStorage.setItem(KEY_SES, JSON.stringify(SES)) : localStorage.removeItem(KEY_SES); }catch(e){} };
+const SYNC={ocupado:false, otraVez:false, error:''};
+
+// Junta dos progresos sin perder nada. Pura (no toca S): se prueba sola. a = este dispositivo, b = la nube.
+function junta(a,b){
+  a=Object.assign(VACIO(),a||{}); if(!b) return a; b=Object.assign(VACIO(),b);
+  // "Borrar progreso" en algún dispositivo: gana el borrado más reciente y lo anterior a él se descarta.
+  if((a.reinicio||'')!==(b.reinicio||'')){
+    if((b.reinicio||'')>(a.reinicio||'')){ const x=Object.assign(VACIO(),b); delete x.v; SOLO_AQUI.forEach(k=>x[k]=a[k]); return x; }
+    return a;
+  }
+  const r=Object.assign({}, b, a); delete r.v;   // campos que no se conocen: se conservan
+  const une=(k,f)=>{ const A=a[k]||{}, B=b[k]||{}, o={};
+    for(const id of new Set([...Object.keys(A),...Object.keys(B)])) o[id] = !(id in A)?B[id] : !(id in B)?A[id] : f(A[id],B[id]);
+    r[k]=o; };
+  const antes=(x,y)=>(x||'')<=(y||'')?x:y, despues=(x,y)=>(x||'')>=(y||'')?x:y;
+  une('hechas', antes); une('logros', antes);                                    // lo primero que pasó
+  une('sellos', (x,y)=>(x.f||'')<=(y.f||'')?x:y);                                // el sello que se ganó primero
+  une('aciertos', Math.max); une('fallos', Math.max); une('planas', Math.max);   // sumar contaría doble
+  // repaso: cada respuesta sube n o f, así que el que tiene más respuestas es el más nuevo
+  une('srs', (x,y)=>{ const nx=(x.n||0)+(x.f||0), ny=(y.n||0)+(y.f||0); return nx!==ny ? (nx>ny?x:y) : ((x.due||'')>=(y.due||'')?x:y); });
+  // banco de errores: el que se falló más veces (un fallo reinicia la cuenta); si empatan, el que va más avanzado
+  une('errores', (x,y)=>(x.f||0)!==(y.f||0) ? ((x.f||0)>(y.f||0)?x:y) : ((x.ok||0)>=(y.ok||0)?x:y));
+  une('salidos', despues);
+  for(const [k,d] of Object.entries(r.salidos)){ const e=r.errores[k]; if(e && !(e.fallo && e.fallo>d)) delete r.errores[k]; }
+  // racha: la del que estudió más reciente; si estudió justo el día después del otro, la continúa
+  const ua=a.ultimoDia||'', ub=b.ultimoDia||'';
+  if(ua===ub){ r.racha=Math.max(a.racha||0,b.racha||0); r.ultimoDia=a.ultimoDia; }
+  else { const [g,o]=ua>ub?[a,b]:[b,a]; r.racha=g.racha||0; r.ultimoDia=g.ultimoDia;
+    if(o.ultimoDia && fecha(new Date(new Date(o.ultimoDia+'T12:00').getTime()+864e5))===g.ultimoDia) r.racha=Math.max(r.racha,(o.racha||0)+1); }
+  r.xp=Math.max(a.xp||0,b.xp||0);
+  for(const k of Object.keys(b)) if(typeof b[k]==='boolean' && !SOLO_AQUI.includes(k)) r[k]=!!(a[k]||b[k]);   // banderas (bancoSembrado…)
+  SOLO_AQUI.forEach(k=>r[k]=a[k]);
+  return r;
+}
+const paraNube=x=>{ const o=Object.assign({},x,{v:ESQUEMA}); SOLO_AQUI.forEach(k=>delete o[k]); return o; };
+
+// ---------- llamadas a Supabase ----------
+const ERR_SB={over_email_send_rate_limit:'Espera un minuto antes de pedir otro código.', otp_expired:'El código no es correcto o ya venció.',
+  signup_disabled:'Ese correo no tiene cuenta en esta app.', otp_disabled:'Ese correo no tiene cuenta en esta app.', email_address_invalid:'Ese correo no es válido.'};
+async function sbAuth(ruta, cuerpo){
+  const r=await fetch(SB_URL+'/auth/v1/'+ruta,{method:'POST', headers:{apikey:SB_KEY,'Content-Type':'application/json'}, body:JSON.stringify(cuerpo)});
+  const j=await r.json().catch(()=>({}));
+  if(!r.ok) throw Object.assign(new Error(ERR_SB[j.error_code] || (r.status===429?ERR_SB.over_email_send_rate_limit:'') || j.msg || j.error_description || ('Error '+r.status)), {status:r.status});
+  return j;
+}
+function tomaSesion(j){ SES=Object.assign(SES||{}, {access:j.access_token, refresh:j.refresh_token, vence:Date.now()+(j.expires_in||3600)*1000},
+  j.user?{email:j.user.email, uid:j.user.id}:{}); guardaSes(); }
+async function token(){
+  if(!SES) return null;
+  if(Date.now() < SES.vence-60e3) return SES.access;
+  try{ tomaSesion(await sbAuth('token?grant_type=refresh_token',{refresh_token:SES.refresh})); return SES.access; }
+  catch(e){ if(e.status>=400 && e.status<500){ SES=null; guardaSes(); pintaSync(); } throw e; }   // sesión vencida: hay que volver a entrar
+}
+async function sbProgreso(metodo, cuerpo){
+  const t=await token(); if(!t) throw new Error('Tu sesión venció: vuelve a entrar con tu correo.');
+  const r=await fetch(SB_URL+'/rest/v1/progreso'+(metodo==='GET'?'?select=estado':''), {method:metodo, keepalive:metodo!=='GET',
+    headers:{apikey:SB_KEY, Authorization:'Bearer '+t, 'Content-Type':'application/json', Prefer:'resolution=merge-duplicates,return=minimal'},
+    body:cuerpo?JSON.stringify(cuerpo):undefined});
+  if(!r.ok) throw new Error('Supabase respondió '+r.status+' (¿el proyecto está pausado?)');
+  return metodo==='GET' ? r.json() : null;
+}
+
+// ---------- sincronizar ----------
+async function sincroniza(){
+  if(!SES) return;
+  if(SYNC.ocupado){ SYNC.otraVez=true; return; }
+  SYNC.ocupado=true; SYNC.error=''; pintaSync('Sincronizando…');
+  try{
+    const filas=await sbProgreso('GET'), nube=filas[0] && filas[0].estado;
+    if(nube && (nube.v||1)>ESQUEMA) throw new Error('Otro dispositivo tiene una versión más nueva de la app: cierra esta y ábrela otra vez.');
+    const antes=JSON.stringify(S), nuevo=junta(S, nube);
+    if(JSON.stringify(nuevo)!==antes){ S=nuevo; guardar(); if(!L) pinta(); }   // durante una lección no se repinta
+    const sube=paraNube(S);
+    if(!nube || JSON.stringify(sube)!==JSON.stringify(nube)) await sbProgreso('POST', {user_id:SES.uid, estado:sube});
+    SES.ultima=Date.now(); guardaSes();
+  }catch(e){ SYNC.error = navigator.onLine===false || e instanceof TypeError ? 'Sin conexión: se sincroniza cuando vuelva.' : e.message; }
+  SYNC.ocupado=false; pintaSync();
+  if(SYNC.otraVez){ SYNC.otraVez=false; sincroniza(); }
+}
+const haceCuanto=t=>{ const m=Math.round((Date.now()-t)/60e3); return m<1?'hace un momento':m<60?'hace '+m+' min':m<1440?'hace '+Math.round(m/60)+' h':'hace '+Math.round(m/1440)+' días'; };
+function pintaSync(texto){
+  const e=$('sync-estado'), b=$('sync'); if(!e) return;
+  b.textContent = SES ? 'Sincronización' : 'Sincronizar dispositivos';
+  e.classList.toggle('mal', !!SYNC.error);
+  e.textContent = texto || (!SES ? '' : SYNC.error || (SES.ultima ? 'Sincronizado '+haceCuanto(SES.ultima)+' · '+SES.email : SES.email));
+}
+
+// ---------- entrar con código de 6 números ----------
+// Diálogo con un campo (reusa #dlg). Devuelve el texto escrito, o null si se cancela.
+function preguntaCampo(o){
+  const p=$('dlg-p'), c=document.createElement('input'); c.className='campo'+(o.codigo?' codigo':''); c.type=o.tipo||'text';
+  c.autocomplete=o.codigo?'one-time-code':'email'; if(o.codigo){ c.inputMode='numeric'; c.maxLength=10; } c.placeholder=o.ph||''; c.value=o.valor||'';
+  let av=null; if(o.aviso){ av=document.createElement('p'); av.className='aviso'; av.textContent=o.aviso; }
+  const r=pregunta(o); p.after(c); if(av) c.after(av);
+  setTimeout(()=>c.focus(),60);
+  c.onkeydown=ev=>{ if(ev.key==='Enter') $('dlg-si').click(); };
+  return r.then(v=>{ const x=c.value.trim(); c.remove(); if(av) av.remove(); return v && x ? x : null; });
+}
+async function entrar(){
+  let correo=null, aviso='';
+  for(;;){ correo=await preguntaCampo({sello:'同', titulo:'Sincronizar tus dispositivos', tipo:'email', ph:'tu correo', valor:correo||'', aviso,
+      texto:'Escribe tu correo y te mando un código de 6 números. Solo se hace una vez en cada dispositivo.', si:'Mandar código', no:'Cancelar'});
+    if(!correo) return;
+    try{ await sbAuth('otp',{email:correo, create_user:true}); break; }catch(e){ aviso=e.message; }
+  }
+  aviso='';
+  for(;;){ const cod=await preguntaCampo({sello:'码', titulo:'Escribe el código', codigo:true, ph:'······', aviso,
+      texto:'Te lo mandé a '+correo+'. Puede tardar un minuto; si no llega, revisa el spam.', si:'Entrar', no:'Cancelar'});
+    if(!cod) return;
+    try{ tomaSesion(await sbAuth('verify',{type:'email', email:correo, token:cod.replace(/\D/g,'')})); break; }catch(e){ aviso=e.message; }
+  }
+  pintaSync(); await sincroniza();
+  pregunta({sello:'同', titulo:'¡Listo!', texto: SYNC.error ? 'Entraste, pero no se pudo sincronizar: '+SYNC.error
+    : 'Tu progreso de este dispositivo ya está en la nube. Entra con el mismo correo en tus otros dispositivos y se juntará solo.', si:'Va', no:'Cerrar'});
+}
+$('sync').onclick=async()=>{
+  if(!SES) return entrar();
+  const v=await pregunta({sello:'同', titulo:'Sincronización', texto:'Con '+SES.email+'. '+(SES.ultima?'Última vez: '+haceCuanto(SES.ultima)+'.':'')+
+    ' Se sincroniza sola al abrir la app y al terminar cada lección.', si:'Sincronizar ahora', no:'Más opciones'});
+  if(v) return sincroniza();
+  if(await pregunta({sello:'退', titulo:'¿Cerrar sesión en este dispositivo?', texto:'Tu progreso se queda aquí y en la nube; solo deja de sincronizar hasta que vuelvas a entrar.',
+    si:'Cerrar sesión', no:'No'})){ SES=null; guardaSes(); pintaSync(); }
+};
+
 // ---------- extras ----------
 $('exportar').onclick=()=>{
   const data={app:'hanzi-camino',version:3,exportado:new Date().toISOString(),xp:S.xp,racha:S.racha,ultimo_dia:S.ultimoDia,
@@ -1543,9 +1685,12 @@ $('exportar').onclick=()=>{
   a.download='hanzi-progreso-'+hoy()+'.json'; a.click();
 };
 $('borrar').onclick=()=>pregunta({sello:'删', titulo:'¿Borrar todo tu progreso?',
-  texto:'Se borran lecciones, sellos, racha, repasos y planas. No se puede deshacer. Si quieres, primero exporta tu progreso.',
-  si:'Borrar todo', no:'Cancelar', peligro:true}).then(v=>{ if(v){ const son=S.sonido, vib=S.vibra; S=VACIO(); S.sonido=son; S.vibra=vib; guardar(); pinta(); pintaAjustes(); } });
-pinta(); pintaAjustes();
+  texto:'Se borran lecciones, sellos, racha, repasos y planas. No se puede deshacer. Si quieres, primero exporta tu progreso.'+
+    (SES?' Como tienes la sincronización activa, también se borra en la nube y en tus otros dispositivos.':''),
+  si:'Borrar todo', no:'Cancelar', peligro:true}).then(v=>{ if(v){ const son=S.sonido, vib=S.vibra; S=VACIO(); S.sonido=son; S.vibra=vib;
+    S.reinicio=new Date().toISOString(); guardar(); pinta(); pintaAjustes(); sincroniza(); } });
+pinta(); pintaAjustes(); pintaSync(); sincroniza();
+document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='visible' && Date.now()-(SES&&SES.ultima||0)>30e3) sincroniza(); });
 if('serviceWorker' in navigator && location.protocol.startsWith('http')) navigator.serviceWorker.register('sw.js').catch(e=>{});
 </script>
 </body>

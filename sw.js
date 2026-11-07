@@ -1,7 +1,7 @@
 // Guarda la app para que funcione sin internet.
 // Estrategia: primero lo guardado (abre al instante, aunque la red falle) y en segundo plano
 // se baja la version nueva para la proxima vez.
-const CACHE='hanzi-camino-v20';
+const CACHE='hanzi-camino-v21';
 // Los clips de voz van en su propio caché, que NO se borra al cambiar de versión: su nombre cambia
 // si cambia el sonido, así que nunca quedan viejos y no hay que volver a bajar ~3 MB en cada versión.
 const CACHE_VOZ='hanzi-camino-voz';
@@ -17,6 +17,9 @@ self.addEventListener('install',e=>{ e.waitUntil(caches.open(CACHE).then(c=>c.ad
 self.addEventListener('activate',e=>{ e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==CACHE&&k!==CACHE_VOZ).map(k=>caches.delete(k)))).then(guardaVoz)); self.clients.claim(); });
 self.addEventListener('fetch',e=>{
   if(e.request.method!=='GET') return;
+  // Solo los archivos de la app. Lo de otros sitios (Supabase: progreso e inicio de sesión) pasa directo, sin caché:
+  // si se guardara, la app vería un progreso viejo.
+  if(new URL(e.request.url).origin!==self.location.origin) return;
   if(/\/voz\/[0-9a-f]+\.mp3$/.test(new URL(e.request.url).pathname)){   // clip: si está guardado, de ahí
     e.respondWith(caches.open(CACHE_VOZ).then(async v=>(await v.match(e.request)) ||
       fetch(e.request).then(r=>{ if(r.ok) v.put(e.request, r.clone()); return r; })));
