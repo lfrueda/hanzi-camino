@@ -1,7 +1,7 @@
 // Guarda la app para que funcione sin internet.
 // Estrategia: primero lo guardado (abre al instante, aunque la red falle) y en segundo plano
 // se baja la version nueva para la proxima vez.
-const CACHE='hanzi-camino-v24';
+const CACHE='hanzi-camino-v25';
 // Los clips de voz van en su propio caché, que NO se borra al cambiar de versión: su nombre cambia
 // si cambia el sonido, así que nunca quedan viejos y no hay que volver a bajar ~3 MB en cada versión.
 const CACHE_VOZ='hanzi-camino-voz';

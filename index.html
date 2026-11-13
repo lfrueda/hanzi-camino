@@ -9,8 +9,9 @@
 <link rel="icon" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-192.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
+<link rel="preload" href="kai.woff2" as="font" type="font/woff2" crossorigin>
 <style>
-  @font-face{font-family:"Kai";src:url(kai.woff2) format("woff2");font-display:swap}
+  @font-face{font-family:"Kai";src:url(kai.woff2) format("woff2");font-display:block}   /* block: mientras carga NO se pinta con otra letra (antes swap: salía un instante con otra tipografía) */
   :root{
     --paper:#e8e5dc; --sheet:#f3f1ea; --ink:#1d1b18; --ink2:#4a463e; --muted:#7b7568; --line:#cfc9bb;
     --seal:#b5312b; --jade:#2f6b4c; --kai:"Kai",KaiTi,STKaiti,"Kaiti SC",serif;
@@ -48,9 +49,11 @@
   .trazos-partes{position:absolute;left:50%;top:9%;height:82%;width:auto;aspect-ratio:1/1;transform:translateX(-50%);overflow:visible;pointer-events:none;fill:var(--ink)}
   .trazos-partes .parte{transition:transform .7s cubic-bezier(.25,.9,.3,1),fill .4s,opacity .35s}   /* sin rebote: con cubic-bezier(.3,1.3,.5,1) la parte se pasaba del marco al separarse */ .trazos-partes .parte.tenue{opacity:.2}
   .palabra.cargando .mizi>span{visibility:hidden}
-  .palabra .mizi{transition:width .45s ease,height .45s ease,margin .45s ease} .palabra{transition:gap .45s}
-  .palabra.animando .mizi{transition:none}   /* el marco cambia a la vez que el dibujo: si no, las partes salen del cuadro mientras crece */
-  .palabra.animando{align-items:center;gap:8px} .palabra.animando .mizi+.mizi{margin-left:0}
+  /* Marco, dibujo y partes se mueven A LA VEZ, con la misma duración y la misma curva (2026-11-13): antes el marco
+     saltaba sin transición y el dibujo cambiaba de tamaño de golpe al juntarse. Si cambias una, cambia las tres. */
+  .palabra .mizi{transition:width .7s cubic-bezier(.25,.9,.3,1),height .7s cubic-bezier(.25,.9,.3,1),margin .7s cubic-bezier(.25,.9,.3,1)} .palabra{transition:column-gap .7s cubic-bezier(.25,.9,.3,1)}
+  .trazos-partes.mov{transition:width .7s cubic-bezier(.25,.9,.3,1),height .7s cubic-bezier(.25,.9,.3,1),transform .7s cubic-bezier(.25,.9,.3,1)}
+  .palabra.animando{align-items:center} .palabra.abierta{column-gap:8px} .palabra.abierta .mizi+.mizi{margin-left:0}
   .palabra .sello{transition:opacity .3s} .palabra.animando .sello{opacity:0}
   .letrero-parte{height:0;overflow:hidden;opacity:0;margin:-6px 0 0;transition:height .35s,opacity .3s;font-size:16px;line-height:1.3;color:var(--ink2)}
   .letrero-parte.on{height:70px;opacity:1}
@@ -161,7 +164,8 @@
   @keyframes sellar{from{transform:rotate(-8deg) scale(1.6);opacity:0}to{transform:rotate(-8deg) scale(1);opacity:1}}
   @media (prefers-reduced-motion:reduce){.sello{animation:none}}
   .sub{color:var(--muted);text-align:center;margin:-6px 0 0}
-  .opciones{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .opciones{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px}   /* minmax(0,…): la columna no crece con el texto (antes se salía de la pantalla) */
+  .opciones.una{grid-template-columns:minmax(0,1fr)} .opciones.una .op{overflow-wrap:anywhere}   /* una opción no cabe en media pantalla: van una debajo de otra (lo decide activaOpciones midiendo) */
   .op{background:var(--sheet);border:1.5px solid var(--ink);padding:16px 8px;font-size:16px;min-height:60px}
   .op.cjk{font-family:var(--kai);font-size:42px;padding:6px;
     background:linear-gradient(to right,transparent 49.6%,#b5312b26 49.6%,#b5312b26 50.4%,transparent 50.4%),
@@ -210,7 +214,7 @@
   /* ---------- palabras del libro (varios caracteres en fila) ---------- */
   .seccion{font-family:var(--kai);font-size:22px;margin:28px 0 -10px;color:var(--ink2);border-bottom:1.5px solid var(--line);padding-bottom:4px}
   .seccion small{font-family:system-ui,-apple-system,sans-serif;font-size:13px;color:var(--muted);margin-left:8px}
-  .palabra{display:flex;flex-wrap:wrap;justify-content:center;position:relative;width:max-content;margin:8px auto 18px}   /* max-width lo pone miziPal: las palabras largas van en dos renglones */
+  .palabra{display:flex;flex-wrap:wrap;justify-content:center;row-gap:8px;position:relative;width:max-content;margin:8px auto 18px}   /* max-width lo pone miziPal: las palabras largas van en dos renglones */
   .palabra .mizi{width:var(--s);height:var(--s);margin:0}
   .palabra .mizi+.mizi{margin-left:-2px}
   .palabra .mizi>span{font-size:calc(var(--s)*.8)}
@@ -903,6 +907,8 @@ function etiqueta(e){
 function ponEtiqueta(e){ const t=etiqueta(e), ej=$('ej'); if(t && !ej.querySelector(':scope > .tag')) ej.insertAdjacentHTML('afterbegin',`<span class="tag">${t.toUpperCase()}</span><br>`); }
 const opcionesHTML=(ops,cjk)=>`<div class="opciones">${ops.map((o,i)=>`<button class="op ${cjk?'cjk':''}" data-i="${i}">${o}</button>`).join('')}</div>`;
 function activaOpciones(){
+  // si el texto de alguna opción no cabe en su botón (pinyin largo, sin espacios), las cuatro van en una columna
+  document.querySelectorAll('.opciones').forEach(o=>{ o.classList.remove('una'); if([...o.querySelectorAll('.op')].some(b=>b.scrollWidth>b.clientWidth+1)) o.classList.add('una'); });
   document.querySelectorAll('.op').forEach(b=>b.onclick=()=>{
     if(L.estado!=='pregunta') return;
     document.querySelectorAll('.op').forEach(x=>x.classList.remove('sel')); b.classList.add('sel');
@@ -1021,7 +1027,7 @@ function pPalIntro(e){
   // En esta tarjeta el carácter se dibuja con sus trazos (también de pincel), para que la animación que lo
   // separa en partes use la misma letra que se ve quieta. Mientras cargan, no se enseña otra letra.
   const pal=document.querySelector('#ej .intro .palabra');
-  if(!TRAZOS){ pal.classList.add('cargando'); setTimeout(()=>pal.classList.remove('cargando'),900); }
+  if(!TRAZOS){ pal.classList.add('cargando'); setTimeout(()=>pal.classList.remove('cargando'),4000); }   // espera los trazos (antes 0.9 s y enseñaba la letra de fuente); a los 4 s se rinde
   Promise.all([cargaTrazos(), cargaPartes().catch(()=>null)]).then(()=>{
     if(!L || L.actual!==e) return;   // ya cambió de ejercicio (o salió de la lección)
     dibujaConTrazos(p.p);
@@ -1083,16 +1089,15 @@ function dibujaConTrazos(w){
 const CELDAS={'⿰':[[0,0],[1,0]], '⿲':[[0,0],[1,0],[2,0]], '⿱':[[0,0],[0,1]], '⿳':[[0,0],[0,1],[0,2]],
   '⿴':[[0,0],[1,0]], '⿷':[[0,0],[1,0]], '⿵':[[0,0],[0,1]], '⿶':[[0,1],[0,0]],
   '⿸':[[0,0],[1,1]], '⿹':[[1,0],[0,1]], '⿺':[[0,1],[1,0]]};
-const CEL=600+100, TOPE=1.8;
+const LADO=600, SEP=100, AIRE=50, TOPE=1.8;   // lado de una parte, separación entre partes, margen del marco, tope de crecimiento
 function parseaIDS(s,i=0){ const c=s[i];
   if(c>='⿰' && c<='⿻'){ const n='⿲⿳'.includes(c)?3:2, hijos=[]; let j=i+1;
     for(let k=0;k<n;k++){ const [h,jj]=parseaIDS(s,j); hijos.push(h); j=jj; } return [[c,...hijos],j]; }
   return [c,i+1]; }
 const cajaDe=g=>{ const b=g.getBBox(); return {x0:b.x,y0:b.y,x1:b.x+b.width,y1:b.y+b.height}; };
 function separaV3(ch, svg){
-  // Reparto v3 (aprobado en la hoja el 2026-11-07): celdas IGUALES, un nodo anidado subdivide su celda y el
-  // marco toma la forma del contenido. Se probó a hacer las celdas proporcionales al tamaño de cada parte
-  // (2026-11-09) y el encuadre se rompía; queda pendiente con una hoja de comparación, no a ciegas.
+  // Devuelve, por parte, a dónde va (off) y cuánto crece (esc), y la caja del marco. El reparto es de SEPARACIÓN
+  // IGUAL (2026-11-13, HANDOFF §23); el de celdas iguales (v3, 2026-11-07) dejaba 亮 desequilibrado.
   const datos=PARTES[ch], pord=datos && datos.p, dstr=datos && datos.d;
   if(!pord || !dstr || !pord.every(p=>Array.isArray(p.ruta))) return null;
   const gk={}; [...svg.querySelectorAll('.parte')].forEach(g=>{ const k=+g.dataset.k; if(k>=0) gk[k]=g; });
@@ -1114,17 +1119,27 @@ function separaV3(ch, svg){
   const ladoDe=n=>Math.max(...dims(n));
   const [arbol]=parseaIDS(dstr), raiz=arma(arbol,[]);
   if(!raiz) return null;
-  junta(raiz); const e0=CEL/Math.max(...hojas.map(ladoDe));
-  const mide=n=>{ if(n.hoja){ n.cols=n.rows=1; return; } const g=celdas(n);
-    n.cols=Math.max(...g.map(c=>c[0]+1)); n.rows=Math.max(...g.map(c=>c[1]+1)); n.hijos.forEach(h=>h&&mide(h)); };
-  mide(raiz);
-  const coloca=(n,cx,cy,w,h)=>{ if(n.hoja){ const b=caja(n), [x,y]=centro(b), [dx,dy]=dims(n), e=Math.min(w/dx,h/dy,e0*TOPE);
-      n.hoja.forEach(k=>{ offP[k]=[cx-e*x, cy-e*y]; escP[k]=e; }); return; }
-    const g=celdas(n), cw=w/n.cols, chh=h/n.rows;
-    n.hijos.forEach((hijo,i)=>{ if(!hijo) return; coloca(hijo, cx-w/2+(g[i][0]+.5)*cw, cy+h/2-(g[i][1]+.5)*chh, cw, chh); }); };
-  const W=CEL*raiz.cols, H=CEL*raiz.rows;
-  coloca(raiz,512,450,W,H);
-  return {off:offP, esc:escP, caja:{x0:512-W/2, x1:512+W/2, y0:450-H/2, y1:450+H/2}};
+  junta(raiz); const e0=LADO/Math.max(...hojas.map(ladoDe));
+  // Reparto con SEPARACIÓN IGUAL (2026-11-13; sustituye a las celdas iguales, que dejaban 亮 con la tapa lejos y lo
+  // de abajo pegado). Cada parte crece hasta que su lado mayor mide LADO (con TOPE para que un punto no sea una
+  // mancha); cada columna mide lo que su parte más ancha y cada renglón lo que su parte más alta, y entre cajas
+  // siempre hay GAP. Un nodo anidado se arma igual y, si queda más grande que LADO, se encoge entero.
+  // traza(n) → {w,h,it}: tamaño del nodo y el centro (x,y; y hacia ABAJO desde su esquina) y escala de cada hoja.
+  const traza=(n,esRaiz)=>{
+    if(n.hoja){ const [dx,dy]=dims(n), e=Math.min(LADO/Math.max(dx,dy), e0*TOPE); return {w:dx*e, h:dy*e, it:[{n, x:dx*e/2, y:dy*e/2, e}]}; }
+    const g=celdas(n), hs=n.hijos.map(h=>h? traza(h,false) : null);
+    const cw=[], rh=[]; hs.forEach((t,i)=>{ if(!t) return; const [c,r]=g[i]; cw[c]=Math.max(cw[c]||0,t.w); rh[r]=Math.max(rh[r]||0,t.h); });
+    const acum=a=>{ let p=0; const o=[]; for(let i=0;i<a.length;i++){ o[i]=p; if(a[i]>0) p+=a[i]+SEP; } return [o, Math.max(p-SEP,1)]; };
+    const [cx,W]=acum(cw), [ry,H]=acum(rh), f= esRaiz ? 1 : Math.min(1, LADO/Math.max(W,H));
+    const it=[]; hs.forEach((t,i)=>{ if(!t) return; const [c,r]=g[i], ox=cx[c]+(cw[c]-t.w)/2, oy=ry[r]+(rh[r]-t.h)/2;
+      t.it.forEach(q=>it.push({n:q.n, x:(q.x+ox)*f, y:(q.y+oy)*f, e:q.e*f})); });
+    return {w:W*f, h:H*f, it};
+  };
+  const R=traza(raiz,true), W=R.w, H=R.h;
+  R.it.forEach(q=>{ const [x,y]=centro(caja(q.n)), cx=512-W/2+q.x, cy=450+H/2-q.y;
+    q.n.hoja.forEach(k=>{ offP[k]=[cx-q.e*x, cy-q.e*y]; escP[k]=q.e; }); });
+  // el marco es la caja del contenido YA COLOCADO más un margen (no una rejilla aparte: así no se descuadra)
+  return {off:offP, esc:escP, caja:{x0:512-W/2-AIRE, x1:512+W/2+AIRE, y0:450-H/2-AIRE, y1:450+H/2+AIRE}};
 }
 
 // palAnimando: la tarjeta que se está animando. Si esa tarjeta ya no está en pantalla (pasaste a otra palabra), la
@@ -1136,7 +1151,10 @@ async function animaPartes(objetivos){
   if(!pal || !letrero) return;
   palAnimando=pal; pal.classList.add('animando');
   const vivo=()=>pal.isConnected, espera=ms=>new Promise(r=>setTimeout(r,ms));
-  const cajas=[...pal.querySelectorAll('.mizi')], n=cajas.length, CHICO=56;
+  const cajas=[...pal.querySelectorAll('.mizi')], n=cajas.length, CHICO=56, MOV=750, ALTO=260;   // ALTO: tope del marco abierto
+  const maxAntes=pal.style.maxWidth;
+  // tamaño del dibujo en reposo dentro de un cuadro de lado s (82% del interior; el borde mide 2 px por lado)
+  const reposo=s=>.82*(s-4);
   try{
     for(const x of objetivos){
       if(!vivo()) break;
@@ -1145,24 +1163,26 @@ async function animaPartes(objetivos){
       if(!r) continue;                                  // sin rutas en los datos: se queda como está
       const datos=PARTES[x.c].p, ps=[...svg.querySelectorAll('.parte')].filter(g=>+g.dataset.k>=0);
       // 1) el marco toma la forma del contenido (no un cuadrado): alto si el carácter es apilado
-      const bx=r.caja, maxW=Math.min(360, innerWidth-56-(n-1)*(CHICO+8)), maxH=420;
+      const bx=r.caja, maxW=Math.max(140, Math.min(360, innerWidth-56-(n-1)*(CHICO+8))), maxH=ALTO;
       const bw=Math.max(bx.x1-bx.x0,1), bh=Math.max(bx.y1-bx.y0,1), k=Math.min((maxW-44)/bw,(maxH-44)/bh);
-      const W=Math.max(200, bw*k+44), H=Math.max(200, bh*k+44);
-      cajas.forEach((c,j)=>{ const yo=j===x.i; c.style.width=(yo?W:CHICO)+'px'; c.style.height=(yo?H:CHICO)+'px'; c.classList.toggle('chica',!yo);
-        if(!yo){ const s=c.querySelector('.trazos-partes');                       // el anterior vuelve a su tamaño
-          if(s){ s.style.width=''; s.style.height=''; s.style.top=''; s.style.transform=''; }
-          c.querySelectorAll('.parte').forEach(g=>{ g.style.transition='none'; g.style.transform=''; g.style.fill=''; g.style.opacity='';
-            setTimeout(()=>{ g.style.transition=''; }, 60); }); } });
-      // 2) el dibujo se escala para llenar el marco y cada parte se va a SU celda (celdas iguales, GAP 100)
-      //    Va SIN espera: si el marco cambia antes que el dibujo, el hanzi se dibuja cuadrado y se sale del marco.
+      const W=Math.max(140, bw*k+44), H=Math.max(140, bh*k+44);
+      // Si el cuadro abierto y los chiquitos caben en un renglón, se quita el tope de ancho de la palabra: con el
+      // tope, el vecino brincaba al renglón de abajo a media animación.
+      if(W+(n-1)*(CHICO+8) <= Math.min(560,innerWidth)-36) pal.style.maxWidth='none';
+      // 2) ABRIR, en un solo movimiento: se "clava" el dibujo en píxeles en su tamaño de reposo (sin transición),
+      //    y luego marco, dibujo y partes van juntos a su estado abierto.
+      const lado0=svg.getBoundingClientRect().height;
+      svg.classList.remove('mov'); svg.style.width=lado0+'px'; svg.style.height=lado0+'px'; svg.style.top='50%';
+      svg.style.transform='translate(-50%,-50%)'; svg.getBoundingClientRect(); svg.classList.add('mov');
+      pal.classList.add('abierta');
+      cajas.forEach((c,j)=>{ const yo=j===x.i; c.style.width=(yo?W:CHICO)+'px'; c.style.height=(yo?H:CHICO)+'px'; c.classList.toggle('chica',!yo); });
       const lado=1024*k, sx=((bx.x0+bx.x1)/2-512)*k, sy=((900-(bx.y0+bx.y1)/2)-512)*k;
-      svg.style.width=lado+'px'; svg.style.height=lado+'px'; svg.style.top='50%';
+      svg.style.width=lado+'px'; svg.style.height=lado+'px';
       svg.style.transform=`translate(-50%,-50%) translate(${-sx}px,${-sy}px)`;
       const suelto=svg.querySelector('.parte[data-k="-1"]'); if(suelto) suelto.style.opacity=0;   // el trazo sin parte se oculta
-      ps.forEach(g=>{ const i=+g.dataset.k, b=g.getBBox(); g.color=PAL_PARTES[i%PAL_PARTES.length];
-        const e=r.esc[i];
-        g.style.transform=`translate(${r.off[i][0]}px,${r.off[i][1]}px) scale(${e})`; g.style.fill=g.color; });
-      await espera(700);
+      ps.forEach(g=>{ const i=+g.dataset.k; g.color=PAL_PARTES[i%PAL_PARTES.length];
+        g.style.transform=`translate(${r.off[i][0]}px,${r.off[i][1]}px) scale(${r.esc[i]})`; g.style.fill=g.color; });
+      await espera(MOV);
       // 3) una por una, en el orden de la descomposición (izquierda→derecha, arriba→abajo)
       const orden=[...ps].sort((a,b)=>+a.dataset.k-+b.dataset.k);
       letrero.classList.add('on');
@@ -1176,15 +1196,22 @@ async function animaPartes(objetivos){
       ps.forEach(o=>o.classList.remove('tenue'));
       letrero.innerHTML=`<div class="suma">${orden.map(g=>`<span class="h" style="color:${g.color}">${datos[+g.dataset.k].c}</span>`).join(' + ')} → <span class="h">${x.c}</span> ${x.py}</div>`;
       await espera(2600); if(!vivo()) break;
-      letrero.classList.remove('on');
-      ps.forEach(g=>{ g.style.transform=''; }); await espera(650);
-      ps.forEach(g=>{ g.style.fill=''; });
-      svg.style.width=''; svg.style.height=''; svg.style.top=''; svg.style.transform=''; if(suelto) suelto.style.opacity='';
-      await espera(350);
+      // 4) CERRAR, también en un solo movimiento: las partes se juntan mientras marco y dibujo vuelven a su tamaño
+      //    normal. Antes eran tres pasos (juntarse en chico, brincar a grande, brincar el marco).
+      letrero.classList.remove('on'); pal.classList.remove('abierta');
+      const s0=parseFloat(getComputedStyle(pal).getPropertyValue('--s'))||cajas[0].offsetWidth, fin=reposo(s0);
+      cajas.forEach(c=>{ c.style.width=''; c.style.height=''; c.classList.remove('chica'); });
+      svg.style.width=fin+'px'; svg.style.height=fin+'px'; svg.style.transform='translate(-50%,-50%)';
+      ps.forEach(g=>{ g.style.transform=''; g.style.fill=''; }); if(suelto) suelto.style.opacity='';
+      await espera(MOV); if(!vivo()) break;
+      svg.classList.remove('mov'); svg.style.width=''; svg.style.height=''; svg.style.top=''; svg.style.transform='';   // ya está en reposo: soltar los píxeles no mueve nada
+      pal.style.maxWidth=maxAntes;
+      await espera(900);   // que el hanzi ya junto se asiente antes de abrir el siguiente (2026-11-13)
     }
   } finally {
+    pal.classList.remove('abierta'); pal.style.maxWidth=maxAntes;
     cajas.forEach(c=>{ c.style.width=''; c.style.height=''; c.classList.remove('chica'); });
-    pal.querySelectorAll('.trazos-partes').forEach(s=>{ s.style.width=''; s.style.height=''; s.style.top=''; s.style.transform=''; });
+    pal.querySelectorAll('.trazos-partes').forEach(s=>{ s.classList.remove('mov'); s.style.width=''; s.style.height=''; s.style.top=''; s.style.transform=''; });
     pal.querySelectorAll('.parte').forEach(g=>{ g.style.transition='none'; g.style.opacity=''; g.style.transform=''; g.style.fill=''; g.classList.remove('tenue');
       setTimeout(()=>{ g.style.transition=''; }, 60); });
     pal.classList.remove('animando'); if(palAnimando===pal) palAnimando=null;
