@@ -73,6 +73,15 @@
   .ap-sub{text-align:center;color:var(--muted);font-size:13px;margin:2px 0 10px}
   .ap-seccion{font-size:13px;font-weight:700;color:var(--ink2);margin:16px 2px 8px;display:flex;justify-content:space-between} .ap-seccion span{font-weight:400;color:var(--muted)}
   .ap-rejilla{display:grid;grid-template-columns:repeat(4,1fr);gap:8px} .ap-rejilla.logros{grid-template-columns:repeat(3,1fr)}
+  /* modo dev (panel escondido para revisar pantallas) */
+  #dev h2{font-family:inherit;font-weight:800;font-size:22px;letter-spacing:.04em}
+  .dev-info{font-size:13px;color:var(--ink2);margin:0 2px 8px;line-height:1.5}
+  .dev-fila{display:flex;flex-wrap:wrap;gap:8px}
+  .dev-b{font-size:14px;padding:9px 12px;background:var(--sheet);color:var(--ink);border:1.5px solid var(--line);border-radius:8px;text-align:left}
+  .dev-b b{font-family:var(--kai);font-weight:400;font-size:19px;margin-right:6px}
+  .dev-b:disabled{opacity:.6}
+  .dev-campo{display:block;width:100%;font:inherit;font-size:17px;padding:11px 12px;margin-bottom:8px;border:1.5px solid var(--line);border-radius:8px;background:var(--sheet);color:var(--ink)}
+  .dev-rejilla{display:grid;grid-template-columns:repeat(3,1fr);gap:6px} .dev-rejilla .dev-b{text-align:center;padding:9px 4px;font-size:13px}
   .ap-hueco{aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;background:var(--sheet);border:1px solid var(--line);position:relative;padding:4px 2px;font:inherit;cursor:pointer}
   .ap-hueco svg{width:66%;height:auto;flex:none} .ap-hueco .pie{font-size:9px;color:var(--muted);text-align:center;margin-top:2px;line-height:1}
   .ap-hueco.vacio{background:transparent;border:1.5px dashed var(--line);cursor:default;padding:4px 2px} .ap-hueco .pie-vacio{font-size:10px;color:#b3ad9f}
@@ -865,7 +874,8 @@ $('salir').onclick=()=>{
     texto:`Llevas ${L.hechos} de ${L.total}. Si sales, esta ${L.modo==='hoy'?'práctica':'lección'} empieza de nuevo (lo que ya respondiste sí cuenta para tus repasos).`,
     si:'Salir', no:'Seguir'}).then(v=>{ if(v) volver(); });
 };
-function volver(){ L=null; $('leccion').style.display='none'; $('camino').style.display='block'; pinta(); window.scrollTo(0,0); }
+function volver(){ const dev=L && L.dev; L=null; $('leccion').style.display='none'; $('camino').style.display='block'; pinta(); window.scrollTo(0,0);
+  if(dev) abreDev(); }   // si la lección se abrió desde el modo dev, se regresa a su panel
 function avance(){ $('avance').style.width = Math.round(100*L.hechos/L.total)+'%'; }
 function setAbajo(clase,txt,html){ $('abajo').className='abajo '+(clase||''); $('fb').innerHTML=html||''; $('accion').textContent=txt; }
 
@@ -1645,6 +1655,67 @@ function abreAlbum(){
     det.innerHTML=`<div class="caja">${selloLogro(g)}<div class="es"><b>${g.n}</b></div><div class="de">Logro · ${S.logros[g.k]}</div><p class="toca">Toca para cerrar</p></div>`; det.hidden=false; });
 }
 $('ver-album').onclick=abreAlbum;
+
+// ================== MODO DEV (panel escondido) ==================
+// Para revisar cualquier pantalla sin jugar hasta llegar a ella (sobre todo en el iPhone).
+// Se abre con el SONIDO APAGADO y 5 toques seguidos en el título 汉字. No esconde nada secreto: solo atajos.
+// Lo que se juegue desde aquí SÍ mueve el progreso (repasos, banco de errores, lecciones de la lista).
+const sinAcento=s=>s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/\s/g,'');
+// Todos los ejercicios que existen para una palabra (k='p') o un hanzi (k='h'), empezando por su tarjeta.
+const devCola=(x,k)=> k==='p'
+  ? [{tipo:'pal-intro',w:x},{tipo:'pal-sig',w:x,pool:Object.keys(P)},{tipo:'pal-elige',w:x,pool:Object.keys(P)},
+     ...(palConTono(x)?[{tipo:'pal-tono',w:x},{tipo:'pal-escribe',w:x}]:[])]
+  : [{tipo:'intro',hz:x},{tipo:'significado',hz:x,pool:Object.keys(C)},{tipo:'hanzi',hz:x,pool:Object.keys(C)},
+     ...(conTono(x)?[{tipo:'tono',hz:x},{tipo:'escribe',hz:x}]:[])];
+function devBusca(q){   // por hanzi, por pinyin (con o sin tonos) o por significado
+  q=sinAcento(q); if(!q) return [];
+  const da=(t,py,es)=>t.includes(q) || sinAcento(py).includes(q) || sinAcento(es).includes(q);
+  return [...Object.values(P).filter(p=>da(p.p,p.py,p.es)).map(p=>['p',p.p,p.py]),
+          ...Object.values(C).filter(c=>da(c.h,c.py,c.es)).map(c=>['h',c.h,c.py])].slice(0,24);
+}
+function abreDev(){
+  let a=$('dev'); if(!a){ a=document.createElement('div'); a.id='dev'; a.className='album-hoja'; document.body.appendChild(a); }
+  const cierra=()=>{ a.hidden=true; document.body.classList.remove('con-album'); };
+  const chip=([k,x,py],txt)=>`<button class="dev-b" data-k="${k}" data-x="${x}"><b>${x}</b>${txt||py}</button>`;
+  const larga=Object.keys(P).sort((x,y)=>[...y].length-[...x].length)[0];
+  const atajos=[[larga,'la palabra más larga'],['同学','partes de 学 y 同'],['漂亮','partes de 亮 (apilado)'],['谢谢','partes de 谢']].filter(([w])=>P[w]);
+  let lec=''; UNIDADES.forEach((u,ui)=>{ for(let l=0;l<LECCIONES_POR_UNIDAD;l++) lec+=`<button class="dev-b" data-u="${ui}" data-l="${l}">${etiquetaUnidad(ui)} · ${l+1}</button>`; });
+  a.innerHTML=`<div class="wrap"><div class="ap-cabeza"><button class="ap-cerrar" aria-label="Cerrar">✕</button></div>
+    <h2>Modo dev</h2><p class="ap-sub">Atajos para revisar pantallas. Lo que juegues aquí sí cuenta en tu progreso.</p>
+    <div class="ap-seccion">Versión</div><p class="dev-info" id="dev-info">…</p>
+    <div class="dev-fila"><button class="dev-b" id="dev-act">Buscar actualización</button></div>
+    <div class="ap-seccion">Atajos</div><div class="dev-fila" id="dev-atajos">${atajos.map(([w,t])=>chip(['p',w],t)).join('')}</div>
+    <div class="ap-seccion">Cualquier palabra o hanzi <span>hanzi, pinyin o significado</span></div>
+    <input class="dev-campo" id="dev-q" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="ej. xue · 学 · estudiar">
+    <div class="dev-fila" id="dev-res"></div>
+    <div class="ap-seccion">Cualquier lección <span>sin candados</span></div><div class="dev-rejilla" id="dev-lec">${lec}</div></div>`;
+  a.hidden=false; document.body.classList.add('con-album'); a.scrollTop=0;
+  a.querySelector('.ap-cerrar').onclick=cierra;
+  // un solo oyente para atajos, resultados y lecciones
+  a.querySelector('.wrap').onclick=ev=>{ const b=ev.target.closest('.dev-b'); if(!b) return;
+    if(b.dataset.x){ cierra(); empezarCola(devCola(b.dataset.x,b.dataset.k),{modo:'dev',titulo:'Modo dev · '+b.dataset.x}); L.dev=true; }
+    else if(b.dataset.u){ cierra(); empezar(+b.dataset.u,+b.dataset.l); L.dev=true; } };
+  $('dev-q').oninput=()=>{ $('dev-res').innerHTML=devBusca($('dev-q').value).map(r=>chip(r)).join('') || ($('dev-q').value.trim()?'<p class="dev-info">Nada con eso.</p>':''); };
+  // versión: qué caché hay, cuántos clips de voz están guardados, tamaño de pantalla y si está instalada
+  (async()=>{ let t='Este navegador no guarda la app (sin caché).';
+    try{ if(self.caches){ const ks=await caches.keys(), idx=await cargaIndiceVoz(), n=new Set(Object.values(idx||{})).size;
+        const v=ks.includes('hanzi-camino-voz') ? (await (await caches.open('hanzi-camino-voz')).keys()).length : 0;
+        t=`Caché: ${ks.filter(k=>/^hanzi-camino-v\d/.test(k)).join(', ')||'sin instalar'} · Voz guardada: ${v} de ${n} clips`; } }catch(e){}
+    const i=$('dev-info'); if(i) i.textContent=t+` · Pantalla ${innerWidth}×${innerHeight}`+
+      (matchMedia('(display-mode: standalone)').matches || navigator.standalone ? ' · instalada' : ' · en el navegador'); })();
+  // buscar actualización: pide el sw.js nuevo; si hay, espera a que se instale y recarga (sin cerrar y abrir dos veces)
+  $('dev-act').onclick=async()=>{ const b=$('dev-act'); b.disabled=true; b.textContent='Buscando…';
+    try{ const r=await navigator.serviceWorker.getRegistration(); if(!r) throw new Error('sin service worker');
+      await r.update(); const n=r.installing||r.waiting;
+      if(!n){ b.textContent='Ya tienes la última versión'; return; }
+      b.textContent='Instalando la versión nueva…';
+      await new Promise(ok=>{ const rev=()=>{ if(n.state==='activated'||n.state==='redundant') ok(); }; n.addEventListener('statechange',rev); rev(); setTimeout(ok,20000); });
+      location.reload();
+    }catch(e){ b.textContent='No se pudo (¿sin internet?)'; } finally{ b.disabled=false; } };
+}
+(()=>{ let n=0, t=0;   // 5 toques seguidos en 汉字 (menos de 0.7 s entre uno y otro), con el sonido apagado
+  document.querySelector('#camino header h1').addEventListener('click',()=>{ const ahora=Date.now(); n = ahora-t<700 ? n+1 : 1; t=ahora;
+    if(n>=5){ n=0; if(!S.sonido) abreDev(); } }); })();
 
 // ================== SINCRONIZAR ENTRE DISPOSITIVOS (Supabase) ==================
 // El progreso vive primero en el dispositivo (localStorage). Si hay sesión, al abrir la app, al volver a ella y al
