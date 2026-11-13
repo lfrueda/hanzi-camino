@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>汉字 · Camino</title>
 <meta name="theme-color" content="#e8e5dc">
 <link rel="manifest" href="manifest.webmanifest">
@@ -18,6 +18,7 @@
   }
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
   html,body{margin:0;background:var(--paper);color:var(--ink);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+  html{touch-action:manipulation}   /* se puede hacer zoom con dos dedos, pero tocar rápido dos veces un botón no acerca la pantalla */
   button{font:inherit;color:inherit;border:0;cursor:pointer;background:none}
   .wrap{max-width:560px;margin:0 auto;padding:0 18px}
   .cjk{font-family:var(--kai)}
@@ -45,9 +46,10 @@
   .nw{white-space:nowrap}
   /* partes del hanzi: la animación (trazos encima del carácter) y su lista */
   .trazos-partes{position:absolute;left:50%;top:9%;height:82%;width:auto;aspect-ratio:1/1;transform:translateX(-50%);overflow:visible;pointer-events:none;fill:var(--ink)}
-  .trazos-partes .parte{transition:transform .7s cubic-bezier(.3,1.3,.5,1),fill .4s,opacity .35s} .trazos-partes .parte.tenue{opacity:.2}
+  .trazos-partes .parte{transition:transform .7s cubic-bezier(.25,.9,.3,1),fill .4s,opacity .35s}   /* sin rebote: con cubic-bezier(.3,1.3,.5,1) la parte se pasaba del marco al separarse */ .trazos-partes .parte.tenue{opacity:.2}
   .palabra.cargando .mizi>span{visibility:hidden}
   .palabra .mizi{transition:width .45s ease,height .45s ease,margin .45s ease} .palabra{transition:gap .45s}
+  .palabra.animando .mizi{transition:none}   /* el marco cambia a la vez que el dibujo: si no, las partes salen del cuadro mientras crece */
   .palabra.animando{align-items:center;gap:8px} .palabra.animando .mizi+.mizi{margin-left:0}
   .palabra .sello{transition:opacity .3s} .palabra.animando .sello{opacity:0}
   .letrero-parte{height:0;overflow:hidden;opacity:0;margin:-6px 0 0;transition:height .35s,opacity .3s;font-size:16px;line-height:1.3;color:var(--ink2)}
@@ -199,7 +201,7 @@
   /* ---------- palabras del libro (varios caracteres en fila) ---------- */
   .seccion{font-family:var(--kai);font-size:22px;margin:28px 0 -10px;color:var(--ink2);border-bottom:1.5px solid var(--line);padding-bottom:4px}
   .seccion small{font-family:system-ui,-apple-system,sans-serif;font-size:13px;color:var(--muted);margin-left:8px}
-  .palabra{display:flex;justify-content:center;position:relative;width:max-content;margin:8px auto 18px}
+  .palabra{display:flex;flex-wrap:wrap;justify-content:center;position:relative;width:max-content;margin:8px auto 18px}   /* max-width lo pone miziPal: las palabras largas van en dos renglones */
   .palabra .mizi{width:var(--s);height:var(--s);margin:0}
   .palabra .mizi+.mizi{margin-left:-2px}
   .palabra .mizi>span{font-size:calc(var(--s)*.8)}
@@ -519,7 +521,24 @@ let S = (()=>{ try{ return Object.assign(VACIO(), JSON.parse(localStorage.getIte
 const guardar=()=>{ try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){} };
 const fecha=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
 const hoy=()=>fecha(new Date()), ayer=()=>fecha(new Date(Date.now()-864e5));
-const idL=(u,l)=>u+'-'+l;
+// ID estable de cada unidad: 'R1'…'R9' (radicales) y 'L4B' (libro, sale de su título "Lección 4B"). El progreso se
+// guarda con él (S.hechas['L4B-0'], S.sellos['L4B-0']) y no con la posición de la unidad en UNIDADES: así meter
+// lecciones nuevas o partir una lección en más partes no desacomoda lo que ya está hecho.
+const UID=UNIDADES.map((u,ui)=>{ const m=u.libro && u.t.match(/Lección (\w+)/); return m ? 'L'+m[1] : 'R'+(ui+1); });
+const UI_DE=Object.fromEntries(UID.map((x,ui)=>[x,ui]));
+const idL=(u,l)=>UID[u]+'-'+l;
+const deId=id=>{ const k=id.lastIndexOf('-'); return [UI_DE[id.slice(0,k)], +id.slice(k+1)]; };   // 'L4B-0' → [posición, lección]
+// Hasta el esquema 1 las claves iban por posición ('12-0'). Esta tabla es cómo estaban las unidades entonces
+// (9 de radicales + lecciones 1–4 del libro): NO se actualiza al meter lecciones, solo sirve para traducir lo viejo.
+const UID_V1=['R1','R2','R3','R4','R5','R6','R7','R8','R9','L1A','L1B','L1C','L2A','L2B','L2C','L2D','L3A','L3B','L3C','L4A','L4B','L4C'];
+function migra(x){   // pasa las claves viejas a las nuevas; sirve para lo guardado aquí y para lo que llega de la nube
+  if(!x) return x;
+  for(const k of ['hechas','sellos']){ const o=x[k]; if(!o) continue;
+    for(const id of Object.keys(o)){ const m=id.match(/^(\d+)-(\d+)$/); if(!m) continue;
+      const n=UID_V1[+m[1]] && UID_V1[+m[1]]+'-'+m[2]; if(n && !(n in o)) o[n]=o[id]; delete o[id]; } }
+  return x;
+}
+migra(S);
 // El libro es otro camino: su primera unidad está abierta desde el inicio.
 const inicioDeCamino=u=>u===0 || (UNIDADES[u].libro && !UNIDADES[u-1].libro);
 function desbloqueada(u,l){ if(l===0 && inicioDeCamino(u)) return true; return l>0 ? !!S.hechas[idL(u,l-1)] : !!S.hechas[idL(u-1,LECCIONES_POR_UNIDAD-1)]; }
@@ -671,9 +690,14 @@ function pinta(){
 }
 
 // ================== 今 HOY ==================
+// Palabras nuevas en Hoy: con tope por día (S.nuevasDia = {d: día, n: cuántas van}) y solo si vas al día.
+// Antes cada ronda metía 3–5 más, sin límite: con repasos atrasados el montón nada más crecía.
+const MAX_ATRASO=15;   // con más repasos vencidos que una ronda (15), primero te pones al día: cero nuevas
+const nuevasDeHoy=()=> S.nuevasDia && S.nuevasDia.d===hoy() ? S.nuevasDia.n : 0;
 function armaHoy(){
-  const due=vencidas().slice(0,15);
-  const nuevas=palabrasLibro().filter(w=>!S.srs['p:'+w]).slice(0, due.length>=12?3:5);
+  const atraso=vencidas(), due=atraso.slice(0,15);
+  const cupo = atraso.length>MAX_ATRASO ? 0 : Math.max(0, (due.length>=12?3:5)-nuevasDeHoy());
+  const nuevas=palabrasLibro().filter(w=>!S.srs['p:'+w]).slice(0, cupo);
   const poolP=Object.keys(P);
   const repaso=due.map(ejercicioDe).filter(Boolean);
   const errores=erroresParaHoy(new Set(due));   // errores del banco, de cualquier nivel, aunque no les toque
@@ -690,7 +714,7 @@ function pintaHoy(){
   $('v-hoy').innerHTML=`
     <div class="hoy"><span class="sellohoy">今</span>
       <h3>Práctica de hoy</h3>
-      <p>${cola.length ? 'Te sale justo lo que estás por olvidar, más unas palabras nuevas del libro.' : 'Todo al día. Vuelve mañana o avanza en 课 Libro.'}</p>
+      <p>${cola.length ? 'Te sale justo lo que estás por olvidar'+(nuevas?', más unas palabras nuevas del libro.':'.') : 'Todo al día. Vuelve mañana o avanza en 课 Libro.'}</p>
       ${cola.length?`<div class="meta">${[[due,'repaso','repasos'],[errores,'error','errores'],[nuevas,'nueva','nuevas']].filter(x=>x[0])
         .map(([n,uno,varios])=>`<span>${n} ${n===1?uno:varios}</span>`).join('')}<span>~${min} min</span></div>`:''}
       <button class="go" id="go-hoy" ${cola.length?'':'disabled'}>${cola.length?'EMPEZAR':'TODO AL DÍA ✓'}</button></div>
@@ -731,7 +755,7 @@ function pintaCamino(){
 function vocabularioHTML(u){
   const marcas=['','✓','✓✓','✓✓✓'];
   const tabla=`<table class="voc">${u.pal.map(w=>{ const p=P[w];
-    return `<tr><td class="h">${w}</td><td class="p">${p.py}</td><td>${p.es}</td><td class="m">${marcas[nivel('p:'+w)]}</td>
+    return `<tr><td class="h"${[...w].length>5?' style="white-space:normal"':''}>${w}</td><td class="p">${p.py}</td><td>${p.es}</td><td class="m">${marcas[nivel('p:'+w)]}</td>
             <td><button class="bocina" data-oir="${w}" aria-label="escuchar">${ICO_OIR}</button></td></tr>`; }).join('')}</table>
     <p class="nota">✓ visto · ✓✓ lo recuerdas · ✓✓✓ dominado</p>`;
   const dlg=(u.dialogos||[]).map(d=>`<h4 style="margin:16px 0 6px">${d.t}</h4><div class="chat">${d.lineas.map((x,i)=>
@@ -933,12 +957,15 @@ function pFrase(e){
 
 // ---------- ejercicios de palabras (vocabulario del libro) ----------
 function miziPal(pal,extra,max){
-  const ch=[...pal], s=Math.min(max||999,[200,140,104,80][Math.min(ch.length,4)-1]);
-  return `<div class="palabra" style="--s:${s}px">${ch.map(c=>`<div class="mizi"><span>${c}</span></div>`).join('')}${extra||''}</div>`;
+  // Hasta 5 caracteres van en un renglón; más largas (墨西哥国立自治大学) se parten en renglones parejos.
+  // El cuadro se encoge lo necesario para que el renglón quepa en la pantalla.
+  const ch=[...pal], n=ch.length, cols= n<=5 ? n : Math.ceil(n/Math.ceil(n/5)), ancho=Math.min(560,innerWidth)-36;
+  const s=Math.min(max||999, [200,140,104,80][Math.min(n,4)-1], Math.floor(ancho/cols));
+  return `<div class="palabra" style="--s:${s}px;max-width:${cols*s}px">${ch.map(c=>`<div class="mizi"><span>${c}</span></div>`).join('')}${extra||''}</div>`;
 }
 const pyDe=pal=>silabas(pal).map(s=>s.slice(-1)==='5'? s.slice(0,-1) : conMarca(s.slice(0,-1),+s.slice(-1))).join('');
 function opcionesPal(ops){
-  const n=Math.max(...ops.map(o=>[...o].length)), fs=[42,36,28,23][Math.min(n,4)-1];
+  const n=Math.max(...ops.map(o=>[...o].length)), fs= n>=7 ? 17 : [42,36,28,23][Math.min(n,4)-1];   // 7 o más: letra chica para que quepa en el botón
   return `<div class="opciones">${ops.map((o,i)=>`<button class="op cjk ${n>1?'pal':''}" style="font-size:${fs}px" data-i="${i}">${o}</button>`).join('')}</div>`;
 }
 // "Sus caracteres": cada hanzi de la palabra con el pinyin que tiene DENTRO de ella y su significado.
@@ -986,13 +1013,13 @@ function pPalIntro(e){
   const pal=document.querySelector('#ej .intro .palabra');
   if(!TRAZOS){ pal.classList.add('cargando'); setTimeout(()=>pal.classList.remove('cargando'),900); }
   Promise.all([cargaTrazos(), cargaPartes().catch(()=>null)]).then(()=>{
-    if(L.actual!==e) return;   // ya cambió de ejercicio
+    if(!L || L.actual!==e) return;   // ya cambió de ejercicio (o salió de la lección)
     dibujaConTrazos(p.p);
     if(!PARTES) return;
     const objetivos=hanziConPartes(p.p); if(!objetivos.length) return;
     $('partes-bot').innerHTML=`<button class="oir" id="ver-partes">${ICO_PARTES}<span>Ver sus partes</span></button>`;
     $('ver-partes').onclick=()=>animaPartes(objetivos);
-    setTimeout(()=>{ if(L.actual===e) animaPartes(objetivos); },400);
+    setTimeout(()=>{ if(L && L.actual===e) animaPartes(objetivos); },400);
   }).catch(()=>pal.classList.remove('cargando'));   // sin los trazos, la tarjeta se queda con la fuente normal
 }
 
@@ -1018,7 +1045,7 @@ function hanziConPartes(w){
   partesDe(w).forEach(x=>{ if(x.son) for(let j=0;j<x.t.length;j++) soloSon.add(k+j); k+=x.t.length; });
   const sil=P[w].pn.split(' ');
   return ch.map((c,i)=>({c, i, py:pySil(sil[i]||'')}))
-    .filter(x=>!soloSon.has(x.i) && !RADS[x.c] && PARTES[x.c] && PARTES[x.c].p.length>1 && TRAZOS[x.c]);
+    .filter(x=>!soloSon.has(x.i) && !RADS[x.c] && PARTES[x.c] && !PARTES[x.c].nd && PARTES[x.c].p.length>1 && TRAZOS[x.c]);
 }
 // El carácter en SVG, con un grupo por parte (los trazos que no son de ninguna parte van aparte, en tinta).
 function svgTrazos(ch){
@@ -1038,31 +1065,96 @@ function dibujaConTrazos(w){
 // Animación: el cuadro se hace ancho (en palabras de 2-3 caracteres se explica uno a la vez y los otros se
 // hacen chiquitos), las partes se apartan con su color y se ilumina una por una con su letrero abajo
 // (pinyin · significado · si da el significado o el sonido). Al final, "口 + 尼 → 呢" y todo se vuelve a juntar.
-let animandoPartes=false;
+// ---------- reparto v3: portado de diseno/revision-partes.html (2026-11-09) ----------
+// Qué cambia contra la regla vieja (que empujaba cada parte desde el centro, 58 en x / 26 en y): cada parte va
+// CENTRADA en su celda de una cuadrícula, todas las celdas miden lo mismo (un nodo anidado SUBDIVIDE su celda en
+// vez de pedir una más grande) y el marco toma la forma del contenido, no un cuadrado. Medido en la hoja con los
+// 229: 0 partes fuera del marco y 0 encimadas, con GAP 80/100/120/200. Parámetros: CEL = 600 + GAP, TOPE = 1.8.
+const CELDAS={'⿰':[[0,0],[1,0]], '⿲':[[0,0],[1,0],[2,0]], '⿱':[[0,0],[0,1]], '⿳':[[0,0],[0,1],[0,2]],
+  '⿴':[[0,0],[1,0]], '⿷':[[0,0],[1,0]], '⿵':[[0,0],[0,1]], '⿶':[[0,1],[0,0]],
+  '⿸':[[0,0],[1,1]], '⿹':[[1,0],[0,1]], '⿺':[[0,1],[1,0]]};
+const CEL=600+100, TOPE=1.8;
+function parseaIDS(s,i=0){ const c=s[i];
+  if(c>='⿰' && c<='⿻'){ const n='⿲⿳'.includes(c)?3:2, hijos=[]; let j=i+1;
+    for(let k=0;k<n;k++){ const [h,jj]=parseaIDS(s,j); hijos.push(h); j=jj; } return [[c,...hijos],j]; }
+  return [c,i+1]; }
+const cajaDe=g=>{ const b=g.getBBox(); return {x0:b.x,y0:b.y,x1:b.x+b.width,y1:b.y+b.height}; };
+function separaV3(ch, svg){
+  // Reparto v3 (aprobado en la hoja el 2026-11-07): celdas IGUALES, un nodo anidado subdivide su celda y el
+  // marco toma la forma del contenido. Se probó a hacer las celdas proporcionales al tamaño de cada parte
+  // (2026-11-09) y el encuadre se rompía; queda pendiente con una hoja de comparación, no a ciegas.
+  const datos=PARTES[ch], pord=datos && datos.p, dstr=datos && datos.d;
+  if(!pord || !dstr || !pord.every(p=>Array.isArray(p.ruta))) return null;
+  const gk={}; [...svg.querySelectorAll('.parte')].forEach(g=>{ const k=+g.dataset.k; if(k>=0) gk[k]=g; });
+  if(pord.some((p,k)=>!gk[k])) return null;
+  const cajaP=pord.map((p,k)=>cajaDe(gk[k])), offP=pord.map(()=>[0,0]), escP=pord.map(()=>1);
+  const centro=b=>[(b.x0+b.x1)/2,(b.y0+b.y1)/2];
+  const une=bs=>({x0:Math.min(...bs.map(b=>b.x0)), y0:Math.min(...bs.map(b=>b.y0)),
+                  x1:Math.max(...bs.map(b=>b.x1)), y1:Math.max(...bs.map(b=>b.y1))});
+  const arma=(nodo,pre)=>{
+    const aqui=pord.map((p,k)=>k).filter(k=>pord[k].ruta.length===pre.length && pre.every((v,i)=>pord[k].ruta[i]===v));
+    const abajo=pord.map((p,k)=>k).filter(k=>pord[k].ruta.length>pre.length && pre.every((v,i)=>pord[k].ruta[i]===v));
+    if(!abajo.length || aqui.length || !Array.isArray(nodo)) return aqui.length||abajo.length ? {hoja:[...aqui,...abajo]} : null;
+    const hijos=nodo.slice(1).map((h,i)=>arma(h,[...pre,i])); return {op:nodo[0], hijos}; };
+  const caja=n=>n.hoja? une(n.hoja.map(k=>cajaP[k])) : une(n.hijos.filter(Boolean).map(caja));
+  const celdas=n=>{ if(CELDAS[n.op] && CELDAS[n.op].length===n.hijos.length) return CELDAS[n.op];
+    return n.hijos.map((_,i)=>[i,0]); };
+  const hojas=[]; const junta=n=>{ if(!n) return; if(n.hoja) hojas.push(n); else n.hijos.forEach(junta); };
+  const dims=n=>{ const b=caja(n); return [Math.max(b.x1-b.x0,1), Math.max(b.y1-b.y0,1)]; };
+  const ladoDe=n=>Math.max(...dims(n));
+  const [arbol]=parseaIDS(dstr), raiz=arma(arbol,[]);
+  if(!raiz) return null;
+  junta(raiz); const e0=CEL/Math.max(...hojas.map(ladoDe));
+  const mide=n=>{ if(n.hoja){ n.cols=n.rows=1; return; } const g=celdas(n);
+    n.cols=Math.max(...g.map(c=>c[0]+1)); n.rows=Math.max(...g.map(c=>c[1]+1)); n.hijos.forEach(h=>h&&mide(h)); };
+  mide(raiz);
+  const coloca=(n,cx,cy,w,h)=>{ if(n.hoja){ const b=caja(n), [x,y]=centro(b), [dx,dy]=dims(n), e=Math.min(w/dx,h/dy,e0*TOPE);
+      n.hoja.forEach(k=>{ offP[k]=[cx-e*x, cy-e*y]; escP[k]=e; }); return; }
+    const g=celdas(n), cw=w/n.cols, chh=h/n.rows;
+    n.hijos.forEach((hijo,i)=>{ if(!hijo) return; coloca(hijo, cx-w/2+(g[i][0]+.5)*cw, cy+h/2-(g[i][1]+.5)*chh, cw, chh); }); };
+  const W=CEL*raiz.cols, H=CEL*raiz.rows;
+  coloca(raiz,512,450,W,H);
+  return {off:offP, esc:escP, caja:{x0:512-W/2, x1:512+W/2, y0:450-H/2, y1:450+H/2}};
+}
+
+// palAnimando: la tarjeta que se está animando. Si esa tarjeta ya no está en pantalla (pasaste a otra palabra), la
+// animación nueva arranca sin esperar a que la vieja termine de darse cuenta (antes un candado global la bloqueaba).
+let palAnimando=null;
 async function animaPartes(objetivos){
-  if(animandoPartes || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  if((palAnimando && palAnimando.isConnected) || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
   const pal=document.querySelector('#ej .intro .palabra'), letrero=document.querySelector('#ej .intro .letrero-parte');
   if(!pal || !letrero) return;
-  animandoPartes=true; pal.classList.add('animando');
+  palAnimando=pal; pal.classList.add('animando');
   const vivo=()=>pal.isConnected, espera=ms=>new Promise(r=>setTimeout(r,ms));
   const cajas=[...pal.querySelectorAll('.mizi')], n=cajas.length, CHICO=56;
-  const W=n>1? Math.min(290, 338-(n-1)*(CHICO+8)) : 330, H=n>1? 180 : 200;
   try{
     for(const x of objetivos){
       if(!vivo()) break;
       const caja=cajas[x.i], svg=caja && caja.querySelector('.trazos-partes'); if(!svg) continue;
-      cajas.forEach((c,j)=>{ const yo=j===x.i; c.style.width=(yo?W:CHICO)+'px'; c.style.height=(yo?H:CHICO)+'px'; c.classList.toggle('chica',!yo); });
-      await espera(480); if(!vivo()) break;
-      const d=TRAZOS[x.c], datos=PARTES[x.c].p, ps=[...svg.querySelectorAll('.parte')].filter(g=>+g.dataset.k>=0);
-      const cen=idx=>{ const pts=idx.flatMap(i=>d.medians[i]), xs=pts.map(q=>q[0]), ys=pts.map(q=>q[1]);
-        return [(Math.min(...xs)+Math.max(...xs))/2, (Math.min(...ys)+Math.max(...ys))/2]; };
-      const todo=cen(d.strokes.map((_,i)=>i)), u=1024/(H*.82);   // px de pantalla → unidades del dibujo
-      ps.forEach(g=>{ const k=+g.dataset.k, [cx,cy]=cen(datos[k].tr); let dx=cx-todo[0], dy=cy-todo[1]; const m=Math.hypot(dx,dy)||1;
-        g.cx=cx; g.cy=cy; g.color=PAL_PARTES[k%PAL_PARTES.length];
-        g.style.transform=`translate(${dx/m*(W>250?58:40)*u}px,${dy/m*26*u}px)`; g.style.fill=g.color; });
+      const r=separaV3(x.c, svg);
+      if(!r) continue;                                  // sin rutas en los datos: se queda como está
+      const datos=PARTES[x.c].p, ps=[...svg.querySelectorAll('.parte')].filter(g=>+g.dataset.k>=0);
+      // 1) el marco toma la forma del contenido (no un cuadrado): alto si el carácter es apilado
+      const bx=r.caja, maxW=Math.min(360, innerWidth-56-(n-1)*(CHICO+8)), maxH=420;
+      const bw=Math.max(bx.x1-bx.x0,1), bh=Math.max(bx.y1-bx.y0,1), k=Math.min((maxW-44)/bw,(maxH-44)/bh);
+      const W=Math.max(200, bw*k+44), H=Math.max(200, bh*k+44);
+      cajas.forEach((c,j)=>{ const yo=j===x.i; c.style.width=(yo?W:CHICO)+'px'; c.style.height=(yo?H:CHICO)+'px'; c.classList.toggle('chica',!yo);
+        if(!yo){ const s=c.querySelector('.trazos-partes');                       // el anterior vuelve a su tamaño
+          if(s){ s.style.width=''; s.style.height=''; s.style.top=''; s.style.transform=''; }
+          c.querySelectorAll('.parte').forEach(g=>{ g.style.transition='none'; g.style.transform=''; g.style.fill=''; g.style.opacity='';
+            setTimeout(()=>{ g.style.transition=''; }, 60); }); } });
+      // 2) el dibujo se escala para llenar el marco y cada parte se va a SU celda (celdas iguales, GAP 100)
+      //    Va SIN espera: si el marco cambia antes que el dibujo, el hanzi se dibuja cuadrado y se sale del marco.
+      const lado=1024*k, sx=((bx.x0+bx.x1)/2-512)*k, sy=((900-(bx.y0+bx.y1)/2)-512)*k;
+      svg.style.width=lado+'px'; svg.style.height=lado+'px'; svg.style.top='50%';
+      svg.style.transform=`translate(-50%,-50%) translate(${-sx}px,${-sy}px)`;
+      const suelto=svg.querySelector('.parte[data-k="-1"]'); if(suelto) suelto.style.opacity=0;   // el trazo sin parte se oculta
+      ps.forEach(g=>{ const i=+g.dataset.k, b=g.getBBox(); g.color=PAL_PARTES[i%PAL_PARTES.length];
+        const e=r.esc[i];
+        g.style.transform=`translate(${r.off[i][0]}px,${r.off[i][1]}px) scale(${e})`; g.style.fill=g.color; });
       await espera(700);
-      // una por una, de izquierda a derecha y de arriba abajo (en el dibujo, la y crece hacia arriba)
-      const orden=[...ps].sort((a,b)=>(a.cx-a.cy)-(b.cx-b.cy));
+      // 3) una por una, en el orden de la descomposición (izquierda→derecha, arriba→abajo)
+      const orden=[...ps].sort((a,b)=>+a.dataset.k-+b.dataset.k);
       letrero.classList.add('on');
       for(const g of orden){ if(!vivo()) break;
         ps.forEach(o=>o.classList.toggle('tenue',o!==g)); const p=datos[+g.dataset.k];
@@ -1076,11 +1168,16 @@ async function animaPartes(objetivos){
       await espera(2600); if(!vivo()) break;
       letrero.classList.remove('on');
       ps.forEach(g=>{ g.style.transform=''; }); await espera(650);
-      ps.forEach(g=>{ g.style.fill=''; }); await espera(350);
+      ps.forEach(g=>{ g.style.fill=''; });
+      svg.style.width=''; svg.style.height=''; svg.style.top=''; svg.style.transform=''; if(suelto) suelto.style.opacity='';
+      await espera(350);
     }
   } finally {
     cajas.forEach(c=>{ c.style.width=''; c.style.height=''; c.classList.remove('chica'); });
-    pal.classList.remove('animando'); animandoPartes=false;
+    pal.querySelectorAll('.trazos-partes').forEach(s=>{ s.style.width=''; s.style.height=''; s.style.top=''; s.style.transform=''; });
+    pal.querySelectorAll('.parte').forEach(g=>{ g.style.transition='none'; g.style.opacity=''; g.style.transform=''; g.style.fill=''; g.classList.remove('tenue');
+      setTimeout(()=>{ g.style.transition=''; }, 60); });
+    pal.classList.remove('animando'); if(palAnimando===pal) palAnimando=null;
   }
 }
 
@@ -1188,11 +1285,14 @@ function normaliza(x){
 function sellar(ch){ efecto('sello'); efecto(ch==='错'?'mal':'ok',.12); vibra(ch==='错'?2:1); const m=document.querySelector('#ej .palabra') || document.querySelector('#ej .mizi'); if(m) m.insertAdjacentHTML('beforeend',`<i class="sello ${ch==='错'?'mal':''}">${ch}</i>`); }
 // ---------- comprobar ----------
 $('accion').onclick=()=>{
+  if(!L) return;                       // fuera de una lección el botón no hace nada (antes tronaba con L=null)
   const e=L.actual;
   if(L.estado==='fin'){ volver(); return; }
   if(L.estado==='respondido'){ siguiente(); return; }
   if(e.tipo==='intro'){ L.hechos++; siguiente(); return; }
-  if(e.tipo==='pal-intro'){ L.hechos++; siguiente(); return; }
+  if(e.tipo==='pal-intro'){
+    if(L.modo==='hoy'){ if(!S.nuevasDia || S.nuevasDia.d!==hoy()) S.nuevasDia={d:hoy(),n:0}; S.nuevasDia.n++; guardar(); }   // cuenta para el tope de nuevas del día
+    L.hechos++; siguiente(); return; }
   let ok=false, sol='', extra='';
   if(e.tipo==='dialogo'){
     ok = L.sel===e.correcta; const x=e.d.lineas[e.i];
@@ -1397,9 +1497,10 @@ function pintaArbol(){
   });
   const color=s=>[['#ece8de','#b9b2a3','#9a9384'],['#f3f1ea','#1d1b18','#1d1b18'],['#b5312b','#b5312b','#fff']][s];
   const nodo=n=>{
-    if(n.tipo==='p'){ const [f,st,tx]=color(estadoPal(n.id)), wpx=[...n.id].length*20+20;
+    if(n.tipo==='p'){ const cs=[...n.id], corto= cs.length>5 ? cs.slice(0,4).join('')+'…' : n.id;   // las largas se recortan (completas en su ficha)
+      const [f,st,tx]=color(estadoPal(n.id)), wpx=[...corto].length*19+16;                          // 5 letras caben justo en el ancho del dibujo (360)
       return `<g class="nd" data-t="p" data-id="${n.id}"><rect x="${n.x-8}" y="${n.y-15}" width="${wpx}" height="30" rx="15" fill="${f}" stroke="${st}" stroke-width="1.5"/>
-        <text x="${n.x+2}" y="${n.y+7}" font-size="19" font-family="Kai,KaiTi,serif" fill="${tx}">${n.id}</text></g>`; }
+        <text x="${n.x+2}" y="${n.y+7}" font-size="19" font-family="Kai,KaiTi,serif" fill="${tx}">${corto}</text></g>`; }
     const s = n.tipo==='h' ? estadoHanzi(n.id) : Math.max(...porRad[n.id].map(estadoHanzi)), [f,st,tx]=color(s), rr=n.tipo==='r'?19:16;
     return `<g class="nd" data-t="${n.tipo}" data-id="${n.id}"><circle cx="${n.x}" cy="${n.y}" r="${rr}" fill="${f}" stroke="${st}" stroke-width="${n.tipo==='r'?2.5:1.5}"/>
       <text x="${n.x}" y="${n.y+7}" text-anchor="middle" font-size="${n.tipo==='r'?22:20}" font-family="Kai,KaiTi,serif" fill="${tx}">${n.id}</text></g>`;
@@ -1491,7 +1592,7 @@ function selloDeLeccion(ui,l,f){
   const h=cand.find(c=>!usados.has(c)) || cand[0]; if(!h) return null;
   return S.sellos[id]={h, f:f||hoy()};
 }
-const hanziAprendidos=()=>new Set(Object.keys(S.hechas).flatMap(id=>{ const [u,l]=id.split('-').map(Number); return hanziDeLeccion(u,l); }));
+const hanziAprendidos=()=>new Set(Object.keys(S.hechas).flatMap(id=>{ const [u,l]=deId(id); return hanziDeLeccion(u,l); }));
 function leccionLibroCompleta(){
   const g={}; UNIDADES.forEach((u,ui)=>{ if(u.libro) (g[u.num]=g[u.num]||[]).push(ui); });   // u.num = 第一课, 第二课…
   return Object.values(g).some(uis=>uis.every(ui=>[0,1,2].every(l=>S.hechas[idL(ui,l)])));
@@ -1513,7 +1614,7 @@ const nSellos=()=>Object.keys(S.sellos).length+Object.keys(S.logros).length;
 // Al abrir: las lecciones que ya estaban hechas reciben su sello (con la fecha en que se hicieron).
 (()=>{ S.sellos=S.sellos||{}; S.logros=S.logros||{};
   Object.entries(S.hechas).sort((a,b)=>String(a[1]).localeCompare(String(b[1]))).forEach(([id,f])=>{
-    const [u,l]=id.split('-').map(Number); selloDeLeccion(u,l,String(f).slice(0,10)); });
+    const [u,l]=deId(id); if(u!==undefined) selloDeLeccion(u,l,String(f).slice(0,10)); });
   revisaLogros(); guardar(); })();
 
 const etiquetaUnidad=ui=>{ const u=UNIDADES[ui], m=u.libro && u.t.match(/Lección (\w+)/); return m ? m[1] : 'Rad. '+(ui+1); };
@@ -1537,7 +1638,7 @@ function abreAlbum(){
   a.querySelector('.ap-cerrar').onclick=()=>{ a.hidden=true; document.body.classList.remove('con-album'); };
   const det=a.querySelector('.ap-detalle');
   det.onclick=()=>{ det.hidden=true; };
-  a.querySelectorAll('[data-sello]').forEach(b=>b.onclick=()=>{ const id=b.dataset.sello, s=S.sellos[id], [u,l]=id.split('-').map(Number), [py,es]=infoHanzi(s.h);
+  a.querySelectorAll('[data-sello]').forEach(b=>b.onclick=()=>{ const id=b.dataset.sello, s=S.sellos[id], [u,l]=deId(id), [py,es]=infoHanzi(s.h);
     det.innerHTML=`<div class="caja">${selloLeccion(id,s.h)}<div class="py">${py}</div><div class="es">${es}</div>
       <div class="de">Sello de ${UNIDADES[u].t} · ${NOMBRES[l]}<br>${s.f}</div><p class="toca">Toca para cerrar</p></div>`; det.hidden=false; });
   a.querySelectorAll('[data-logro]').forEach(b=>b.onclick=()=>{ const g=LOGROS.find(x=>x.k===b.dataset.logro);
@@ -1551,7 +1652,7 @@ $('ver-album').onclick=abreAlbum;
 // Sin librerías: fetch a la API de Supabase. La publishable key PUEDE ir aquí (es pública por diseño): lo que protege
 // los datos son las reglas RLS de la tabla (herramientas/supabase.sql). La secret key NUNCA va en este archivo.
 const SB_URL='https://gevdhcrfjbvllcqmqtdi.supabase.co', SB_KEY='sb_publishable_h7TXB9nXJt_-U9EClmWoJw_pnMtX69F';
-const KEY_SES='hanzi-camino-sesion', ESQUEMA=1;   // ESQUEMA: subir si cambia la forma del progreso (p. ej. camino único)
+const KEY_SES='hanzi-camino-sesion', ESQUEMA=2;   // ESQUEMA: subir si cambia la forma del progreso. 2 = claves de lección por ID estable ('L4B-0'), ver migra()
 const SOLO_AQUI=['sonido','vibra'];               // ajustes de cada dispositivo: no viajan
 let SES=(()=>{ try{ return JSON.parse(localStorage.getItem(KEY_SES)); }catch(e){ return null; } })();
 const guardaSes=()=>{ try{ SES ? localStorage.setItem(KEY_SES, JSON.stringify(SES)) : localStorage.removeItem(KEY_SES); }catch(e){} };
@@ -1578,7 +1679,12 @@ function junta(a,b){
   // banco de errores: el que se falló más veces (un fallo reinicia la cuenta); si empatan, el que va más avanzado
   une('errores', (x,y)=>(x.f||0)!==(y.f||0) ? ((x.f||0)>(y.f||0)?x:y) : ((x.ok||0)>=(y.ok||0)?x:y));
   une('salidos', despues);
-  for(const [k,d] of Object.entries(r.salidos)){ const e=r.errores[k]; if(e && !(e.fallo && e.fallo>d)) delete r.errores[k]; }
+  // >= y no >: el día que fallas algo no puede salir del banco, así que un fallo con la misma fecha que la salida
+  // siempre es posterior a ella (lo sacaste y ese mismo día lo volviste a fallar) y el error se queda.
+  for(const [k,d] of Object.entries(r.salidos)){ const e=r.errores[k]; if(e && !(e.fallo && e.fallo>=d)) delete r.errores[k]; }
+  // palabras nuevas de hoy: el día más reciente; si es el mismo día en los dos, la cuenta más alta
+  const na=a.nuevasDia, nb=b.nuevasDia;
+  if(na||nb) r.nuevasDia = !nb?na : !na?nb : na.d!==nb.d ? (na.d>nb.d?na:nb) : (na.n>=nb.n?na:nb);
   // racha: la del que estudió más reciente; si estudió justo el día después del otro, la continúa
   const ua=a.ultimoDia||'', ub=b.ultimoDia||'';
   if(ua===ub){ r.racha=Math.max(a.racha||0,b.racha||0); r.ultimoDia=a.ultimoDia; }
@@ -1606,11 +1712,11 @@ async function token(){
   if(!SES) return null;
   if(Date.now() < SES.vence-60e3) return SES.access;
   try{ tomaSesion(await sbAuth('token?grant_type=refresh_token',{refresh_token:SES.refresh})); return SES.access; }
-  catch(e){ if(e.status>=400 && e.status<500){ SES=null; guardaSes(); pintaSync(); } throw e; }   // sesión vencida: hay que volver a entrar
+  catch(e){ if(e.status>=400 && e.status<500 && e.status!==429){ SES=null; guardaSes(); pintaSync(); } throw e; }   // sesión vencida: hay que volver a entrar (429 = "vas muy rápido": la sesión sigue buena)
 }
 async function sbProgreso(metodo, cuerpo){
   const t=await token(); if(!t) throw new Error('Tu sesión venció: vuelve a entrar con tu correo.');
-  const r=await fetch(SB_URL+'/rest/v1/progreso'+(metodo==='GET'?'?select=estado':''), {method:metodo, keepalive:metodo!=='GET',
+  const r=await fetch(SB_URL+'/rest/v1/progreso'+(metodo==='GET'?'?select=estado':''), {method:metodo,   // sin keepalive: los navegadores lo limitan a 64 KiB y el progreso completo pesa más
     headers:{apikey:SB_KEY, Authorization:'Bearer '+t, 'Content-Type':'application/json', Prefer:'resolution=merge-duplicates,return=minimal'},
     body:cuerpo?JSON.stringify(cuerpo):undefined});
   if(!r.ok) throw new Error('Supabase respondió '+r.status+' (¿el proyecto está pausado?)');
@@ -1625,7 +1731,7 @@ async function sincroniza(){
   try{
     const filas=await sbProgreso('GET'), nube=filas[0] && filas[0].estado;
     if(nube && (nube.v||1)>ESQUEMA) throw new Error('Otro dispositivo tiene una versión más nueva de la app: cierra esta y ábrela otra vez.');
-    const antes=JSON.stringify(S), nuevo=junta(S, nube);
+    const antes=JSON.stringify(S), nuevo=junta(S, migra(nube));   // lo de la nube puede venir con las claves viejas
     if(JSON.stringify(nuevo)!==antes){ S=nuevo; guardar(); if(!L) pinta(); }   // durante una lección no se repinta
     const sube=paraNube(S);
     if(!nube || JSON.stringify(sube)!==JSON.stringify(nube)) await sbProgreso('POST', {user_id:SES.uid, estado:sube});
@@ -1681,7 +1787,8 @@ $('sync').onclick=async()=>{
 
 // ---------- extras ----------
 $('exportar').onclick=()=>{
-  const data={app:'hanzi-camino',version:3,exportado:new Date().toISOString(),xp:S.xp,racha:S.racha,ultimo_dia:S.ultimoDia,
+  const data={app:'hanzi-camino',version:4,   // 4: lecciones_hechas y sellos con ID estable ('L4B-0', 'R1-2')
+exportado:new Date().toISOString(),xp:S.xp,racha:S.racha,ultimo_dia:S.ultimoDia,
     lecciones_hechas:S.hechas,aciertos:S.aciertos,fallos:S.fallos,repaso:S.srs,planas:S.planas,banco_errores:S.errores,sellos:S.sellos,logros:S.logros};
   const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([JSON.stringify(data,null,2)],{type:'application/json'}));
   a.download='hanzi-progreso-'+hoy()+'.json'; a.click();
@@ -1693,7 +1800,13 @@ $('borrar').onclick=()=>pregunta({sello:'删', titulo:'¿Borrar todo tu progreso
     S.reinicio=new Date().toISOString(); guardar(); pinta(); pintaAjustes(); sincroniza(); } });
 pinta(); pintaAjustes(); pintaSync(); sincroniza();
 document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='visible' && Date.now()-(SES&&SES.ultima||0)>30e3) sincroniza(); });
-if('serviceWorker' in navigator && location.protocol.startsWith('http')) navigator.serviceWorker.register('sw.js').catch(e=>{});
+if('serviceWorker' in navigator && location.protocol.startsWith('http')){
+  // Los clips de voz que falten se bajan cuando la app ya abrió (se lo pide la página al service worker), no mientras
+  // el service worker se activa: ahí bloqueaba el audio, los trazos y las partes hasta acabar de bajar todo.
+  const pideVoz=()=>navigator.serviceWorker.ready.then(r=>{ if(r.active) r.active.postMessage('voz'); }).catch(()=>{});
+  navigator.serviceWorker.register('sw.js').then(pideVoz).catch(e=>{});
+  navigator.serviceWorker.addEventListener('controllerchange', pideVoz);   // llegó una versión nueva del service worker
+}
 </script>
 </body>
 </html>
