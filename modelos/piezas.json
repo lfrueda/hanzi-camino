@@ -1,0 +1,98 @@
+{
+  "_leeme": "Cada pieza 3D de la app es un archivo .glb de esta carpeta. Para cambiar una pieza: reemplaza su archivo (con el mismo nombre) y, si llega chueca o de otro tamaño, ajusta sus números aquí. No hace falta tocar código. La guía está en GUIA-MODELOS.md.",
+  "_medidas": "Todo se mide en píxeles de una carta de 300 × 600; la app lo agranda o achica sola según la pantalla.",
+  "piezas": {
+    "sello": {
+      "_que_es": "El bloque de sellos que cae cuando aciertas.",
+      "archivo": "sello.glb",
+      "tam": 230,
+      "gira": [
+        0,
+        0,
+        0
+      ],
+      "movimiento": "rueda",
+      "donde": {
+        "x": 150,
+        "y": 205,
+        "angulo": -18
+      },
+      "caras": [
+        {
+          "giro": 900,
+          "huella": "huellas/sello-1.png"
+        },
+        {
+          "giro": 720,
+          "huella": "huellas/sello-2.png"
+        },
+        {
+          "giro": 810,
+          "huella": "huellas/sello-3.png"
+        }
+      ],
+      "huella": {
+        "ancho": 73,
+        "alto": 230
+      },
+      "sustituto": {
+        "medidas": [
+          73,
+          230,
+          73
+        ],
+        "color": "#2b2826"
+      }
+    },
+    "selloChico": {
+      "_que_es": "El sello chico que cae al terminar la lección.",
+      "archivo": "sello-chico.glb",
+      "tam": 86,
+      "gira": [
+        90,
+        0,
+        0
+      ],
+      "movimiento": "caricatura",
+      "huella": {
+        "ancho": 40,
+        "alto": 40
+      },
+      "sustituto": {
+        "medidas": [
+          35,
+          86,
+          35
+        ],
+        "color": "#b01f19"
+      }
+    },
+    "sobre": {
+      "_que_es": "El sobre del que sale el mazo al empezar la lección. Su .glb debe traer una parte llamada «solapa» con el origen en el doblez; opcionales «cordon», «rotulo», y «atras» y «frente» (el mazo se mete entre esas dos).",
+      "archivo": "sobre.glb",
+      "tam": 364,
+      "gira": [
+        0,
+        0,
+        0
+      ],
+      "solapa": {
+        "abre": -180
+      },
+      "mazo": {
+        "ancho": 168,
+        "arriba": 14,
+        "grueso": 4,
+        "sube": 120
+      },
+      "sustituto": {
+        "medidas": [
+          188,
+          364,
+          10
+        ],
+        "color": "#b3261e"
+      }
+    }
+  }
+}

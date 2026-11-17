@@ -12,3 +12,9 @@ Apartados: 今 Hoy (repaso espaciado) · 课 Libro (lecciones) · 写 Planas (or
 - `trazos.json`: datos de hanzi-writer-data, derivados de Make Me a Hanzi; fuentes de Arphic Technology,
   bajo la Arphic Public License.
 - `sonidos.json`: efectos de sonido de Kenney (www.kenney.nl), licencia CC0.
+- `partes.json`: descomposición de los hanzi y qué trazos son de cada parte, derivados de `dictionary.txt` de
+  Make Me a Hanzi (github.com/skishore/makemeahanzi), bajo las licencias de ese proyecto.
+- `tres/`: three.js r160 (con `GLTFLoader`, `BufferGeometryUtils` y `RoomEnvironment`) — MIT License, (c) three.js authors.
+- `modelos/huellas/`: las huellas de los sellos se dibujaron con la fuente 崇羲篆體 de la Academia Sinica
+  (CC BY-ND 3.0 TW). La fuente no se incluye.
+- `voz/`: clips generados con Azure AI Speech (voz Xiaoxiao).

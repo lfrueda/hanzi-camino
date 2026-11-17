@@ -1,11 +1,15 @@
 // Guarda la app para que funcione sin internet.
 // Estrategia: primero lo guardado (abre al instante, aunque la red falle) y en segundo plano
 // se baja la version nueva para la proxima vez.
-const CACHE='hanzi-camino-v25';
+const CACHE='hanzi-camino-v26';
 // Los clips de voz van en su propio caché, que NO se borra al cambiar de versión: su nombre cambia
 // si cambia el sonido, así que nunca quedan viejos y no hay que volver a bajar ~3 MB en cada versión.
 const CACHE_VOZ='hanzi-camino-voz';
-const ARCHIVOS=['./','./index.html','./manifest.webmanifest','./icon-192.png','./icon-512.png','./kai.woff2','./hanzi-writer.min.js','./trazos.json','./partes.json','./sonidos.json','./voz/indice.json'];
+// Los del segundo renglón son del rediseño (HANDOFF §24): el motor 3D, three.js y las piezas. Si se agrega una pieza o una huella a modelos/, hay que ponerla aquí.
+// (Dentro de la lista no van comentarios: la hoja de pruebas la lee tal cual.)
+const ARCHIVOS=['./','./index.html','./manifest.webmanifest','./icon-192.png','./icon-512.png','./kai.woff2','./hanzi-writer.min.js','./trazos.json','./partes.json','./sonidos.json','./voz/indice.json',
+  './piezas.js','./tres/three.module.min.js','./tres/GLTFLoader.js','./tres/BufferGeometryUtils.js','./tres/RoomEnvironment.js',
+  './modelos/piezas.json','./modelos/sello.glb','./modelos/sello-chico.glb','./modelos/sobre.glb','./modelos/huellas/sello-1.png','./modelos/huellas/sello-2.png','./modelos/huellas/sello-3.png'];
 // Baja los clips que falten, de 6 en 6 (cientos a la vez saturaban al teléfono y varios fallaban).
 // Si alguno falla no pasa nada: se vuelve a intentar la próxima vez que abras la app, o se baja al oírlo.
 // La página lo pide con un mensaje ('voz') cuando ya abrió. NO va dentro de 'activate': mientras el service worker
